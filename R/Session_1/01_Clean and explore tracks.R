@@ -1,18 +1,19 @@
 
-##############################
 ### Clean and explore data ###
-##############################
 
 library(tidyverse)
 library(readxl)
 library(plotly)
 library(bayesmove)
+# install.packages("rnaturalearthhires", repos = "https://ropensci.r-universe.dev", type = "source")
 library(rnaturalearth)
 library(sf)
 library(scico)
 
 
+###################
 #### Load data ####
+###################
 
 dat <- read_excel("raw_data/GL_bulls_example.xlsx")
 
@@ -39,7 +40,9 @@ table(dat$`Elephant Id`, useNA = "ifany")
 
 
 
+##################################################################################
 #### Rename columns, convert temperature to 'integer' class, and sort by date ####
+##################################################################################
 
 dat2 <- dat |> 
   select(-c(Date, Time, Accelerometer)) |>  #remove these columns since not needed
@@ -54,33 +57,29 @@ dat2 <- dat |>
 
 
 
-
+#########################################
 #### Check for and remove duplicates ####
+#########################################
 
 # Check for any duplicate records
 dat2 |> 
-  split(~id) |>  #create list grouped by ID
-  map(~{.x |> 
-      group_by(id, date) |>  #define groups as a timestamp per ID
-      filter(n() > 1) |>  #only keep records where >1 occur (i.e., duplicates)
-      ungroup()
-  })
+  group_by(id, date) |>  #define groups as a timestamp per ID
+  filter(n() > 1) |>  #only keep records where >1 occur (i.e., duplicates)
+  ungroup()
 #3 pairs total; 2 for ID 5605, 1 for ID 6471
 
 # Remove duplicate records
 dat3 <- dat2 |>
-  split(~id) |> 
-  map(~{.x |> 
-      group_by(id, date) |>
-      distinct(date, .keep_all = TRUE) |>  #only keep one copy for each timestamp per ID
-      ungroup()
-  }) |> 
-  bind_rows()  #convert back to single data.frame
+  group_by(id, date) |>
+  distinct(date, .keep_all = TRUE) |>  #only keep one copy for each timestamp per ID
+  ungroup()
 
 
 
-
+#############################################
 #### Check basic summary stats on tracks ####
+#############################################
+
 dat3 |> 
   summarize(.by = id,
             start = first(date),
@@ -95,13 +94,15 @@ dat3 |>
 
 
 
+########################################################
 #### Visualize tracks to determine if any anomalies ####
+########################################################
 
 # Change 'id' to character so treated as discrete values (not continuous)
 dat3$id <- as.character(dat3$id)
 
 ggplot(dat3, aes(lon, lat, color = id)) +
-  geom_path(aes(group = id), size = 0.25) +
+  geom_path(aes(group = id), linewidth = 0.25) +
   scale_color_brewer(palette = "Set1") +
   theme_bw() +
   coord_equal()
@@ -126,7 +127,7 @@ plotly::ggplotly(
   ggplot() +
     geom_sf(data = africa) +
     geom_path(data = dat3, aes(lon, lat, group = id, color = id,
-                               text = paste(
+                               text = paste(  #create custom tooltip on hover
                                  "ID:", id,
                                  "\nLon:", lon,
                                  "\nLat", lat,
@@ -149,8 +150,9 @@ dat3 |>
 
 
 
-
+################################################
 #### Explore how locations change over time ####
+################################################
 
 # Inspect time series plots of lat and long
 dat3 |> 
@@ -166,8 +168,9 @@ dat3 |>
 
 
 
-
+############################################
 #### Explore temperature data over time ####
+############################################
 
 # By date
 dat3 |> 
@@ -191,6 +194,10 @@ dat3 |>
   facet_wrap(~id, ncol = 1)
 
 
+
+
+#############################
 #### Export cleaned data ####
+#############################
 
 write_csv(dat3, "processed_data/cleaned_tracks.csv")

@@ -6,6 +6,7 @@ library(move)
 library(sf)
 library(rnaturalearth)
 library(tictoc)
+library(terra)
 
 source("R/utils.R")  #load in custom functions
 
@@ -21,29 +22,22 @@ summary(dat)
 
 
 
-####################################################
-#### Wrangle and prep data for dBBMM estimation ####
-####################################################
-
-# Split data into list by ID
-dat_list <- dat |>
-  add_trans_coords(coords = c("lon","lat"), proj = 4326, new_proj = 32736) |>  #add UTM coords (labeled 'x' & 'y')
-  split(~id)
-
-
-
-
 
 #########################
 #### Run dBBMM model ####
 #########################
+
+# Split data into list by ID and add coords in UTM
+dat_list <- dat |>
+  add_trans_coords(coords = c("lon","lat"), proj = 4326, new_proj = 32736) |>  #add UTM coords (labeled 'x' & 'y')
+  split(~id)
 
 
 dbbmm_list <- vector("list", length(dat_list))  #to store dBBMM results
 contours <- vector("list", length(dat_list))  #to store resulting 50% and 95% UD contours
 
 
-# Estimate separately by ID
+## Fit dBBMM separately by ID
 for (i in seq_along(dat_list)) {
   message(paste("ID:", names(dat_list)[i]))  #print current ID
 
@@ -52,13 +46,8 @@ for (i in seq_along(dat_list)) {
                   proj = "EPSG:32736",
                   animal = dat_list[[i]]$id)
 
-  # Conditionally define extent; necessary for turtles that don't migrate
-  # x.ext <- diff(dat.mov@bbox[1,])
-  # rast.ext <- ifelse(x.ext < 100, 3, 0.3)
-
-
-  ## Run dBBMM (this will take a little while to run)
-
+  
+  # Run dBBMM (this will take a little while to run)
   tic()
   dbbmm_list[[i]] <- brownian.bridge.dyn(object = dat_mov, raster = 500, location.error = 30,
                                        margin = 9, window.size = 29)
@@ -86,10 +75,12 @@ BRRR::skrrrahh('liljon')
 ud95 <- getVolumeUD(dbbmm_list[[1]])
 ud95[ud95 > 0.95] <- NA
 plot(ud95, main = paste0("ID ", names(dat_list)[1], ": 95% UD"))
+lines(contours[[1]][2,], col = "black", bg = NA)
 
 ud50 <- getVolumeUD(dbbmm_list[[1]])
 ud50[ud50 > 0.50] <- NA
 plot(ud50, main = paste0("ID ", names(dat_list)[1], ": 50% UD"))
+lines(contours[[1]][1,], col = "black", bg = NA)
 
 
 # Merge all UD contours together
@@ -138,7 +129,7 @@ ggplot() +
 
 #5605
 ggplot() +
-  geom_path(data = dat_list$`5605`, aes(x, y), linewidth = 0.5, alpha = 0.5) +
+  geom_path(data = dat_list$`5605`, aes(x, y), linewidth = 0.5, alpha = 0.25) +
   geom_sf(data = contours2 |>
             filter(id == 5605), aes(color = level), fill = NA, linewidth = 0.75) +
   scale_color_brewer(palette = 'Set1') +
@@ -148,7 +139,7 @@ ggplot() +
 
 #6470
 ggplot() +
-  geom_path(data = dat_list$`6470`, aes(x, y), linewidth = 0.5, alpha = 0.5) +
+  geom_path(data = dat_list$`6470`, aes(x, y), linewidth = 0.5, alpha = 0.25) +
   geom_sf(data = contours2 |>
             filter(id == 6470), aes(color = level), fill = NA, linewidth = 0.75) +
   scale_color_brewer(palette = 'Set1') +
@@ -158,7 +149,7 @@ ggplot() +
 
 #6471
 ggplot() +
-  geom_path(data = dat_list$`6471`, aes(x, y), linewidth = 0.5, alpha = 0.5) +
+  geom_path(data = dat_list$`6471`, aes(x, y), linewidth = 0.5, alpha = 0.25) +
   geom_sf(data = contours2 |>
             filter(id == 6471), aes(color = level), fill = NA, linewidth = 0.75) +
   scale_color_brewer(palette = 'Set1') +
@@ -180,6 +171,81 @@ ggplot() +
   coord_sf(xlim = st_bbox(contours2)[c(1,3)],
            ylim = st_bbox(contours2)[c(2,4)]) +
   facet_wrap(~ level, ncol = 2)
+
+
+
+
+
+
+
+###############################################################
+### Measure space use overlap among IDs and protected areas ###
+###############################################################
+
+# Convert dBBMMs to SpatRasters
+rasters <- map(dbbmm_list, rast) |> 
+  # Add ID to each layer name
+  map2(.y = names(dat_list),
+       .f = ~{
+         names(.x) <- .y
+         return(.x)
+       })
+
+# Modify raster to share common grid
+rasters2 <- create_shared_grid(data = bind_rows(dat_list),
+                               rasters = rasters,
+                               crs = "epsg:32736",
+                               res = 500,
+                               ext = 0.3)
+
+
+## Quanitfy overlap among UDs
+
+# Calculate Volume of Intersection (VI) index
+calc_ud_overlap(rasters2, index = "vi")
+
+# Calculate Bhattacharyya's Affinity (BA) index
+calc_ud_overlap(rasters2, index = "ba")
+
+
+
+## Calculate overlap with National Parks
+gl_pa <- st_read("raw_data/gltfca_protectedAreasDetailed.shp") |> 
+  st_transform(crs = 32736)
+
+ggplot() +
+  geom_sf(data = africa) +
+  geom_sf(data = gl_pa, color = "black", fill = NA, linewidth = 1) +
+  # geom_path(data = dat, aes(lon, lat, group = id, color = factor(id)), alpha = 0.5, linewidth = 0.3) +
+  # Plot 95% isopleths
+  geom_sf(data = contours2 |> 
+            filter(level == 0.95),
+          aes(color = factor(id), fill = factor(id)), linewidth = 0.75, alpha = 0.5) +
+  # Plot 50% isopleths
+  # geom_sf(data = contours2 |> 
+  #           filter(level == 0.5),
+  #         aes(color = factor(id), fill = factor(id)), linewidth = 0.75, alpha = 0.7) +
+  scale_color_brewer("ID", palette = "Dark2") +
+  scale_fill_brewer("ID", palette = "Dark2") +
+  theme_bw() +
+  coord_sf(xlim = ext(rasters2)[1:2],
+           ylim = ext(rasters2)[3:4])
+
+
+
+# All UDs and NPs
+NPs <- gl_pa |> 
+  filter(Designatio == 'National Park')
+
+
+# Calc overlap with NPs
+for (i in 1:nrow(NPs)) {
+  message(paste("Overlap with", NPs$Name[i],"\n"))
+  
+  print(calc_ud_overlap(rasters2, index = "feature", feature = NPs[i,]))
+}
+
+
 
 
 

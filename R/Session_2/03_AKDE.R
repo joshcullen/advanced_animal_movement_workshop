@@ -211,7 +211,7 @@ dt1 <- 0.5 %#% "hour"  #setting to half of median time step
 tic()
 akde_5605w <- akde(data = dat.telem$`5605`, CTMM = ctmm_fit_best$`5605`, weights = TRUE, dt = dt1,
                    grid = list(dr = 1000, align.to.origin = TRUE, dr.fn = max))
-toc()  #took 8 sec
+toc()  #took 3.5 min
 
 summary(akde_5605w)
 plot(dat.telem$`5605`, UD = akde_5605w)
@@ -238,6 +238,8 @@ akde_sf <- map(akde,
   filter(str_detect(name, "est")) |>  #keep only the mean prediction
   separate_wider_delim(cols = name, delim = " ", names = c("id", "level", NA)) |>  #split messy 'name' column
   st_sf(crs = 'epsg:32736')
+
+
 
 
 ### Viz map of estimates
@@ -394,11 +396,13 @@ plot(dat.telem, col = rainbow(length(dat.telem)), add = T)
 # pkde() estimates range for entire pop. (via extrapolation) by accounting for inter-individual variability
 #for when you have a small sample of a larger population - such as for a herd or colony
 tic()
-pkde <- pkde(data = dat.telem, UD = akde, kernel = "population", ref = "Gaussian", weights = FALSE)
-toc()  #took 6 min
+pkde <- pkde(data = dat.telem, UD = akde, kernel = "individual", ref = "Gaussian", weights = TRUE,
+             dt = dt1, population = 3)
+toc()  #took 16 min
 
 summary(pkde)
 plot(dat.telem, UD = pkde, col = rainbow(length(dat.telem)))
+#in this case, results nearly identical to mean(); different results and shorter run-time when kernel = "population"
 
 
 # meta() averages home range areas (in square meters) to get the population average and coefficient of variation
@@ -464,10 +468,21 @@ ggplot() +
 
 
 
+#####################################
+### Perform workflow in Shiny app ###
+#####################################
+
+#remotes::install_github("ctmm-initiative/ctmmweb")
+ctmmweb::app(dat.telem)
+
+
+
 
 
 ##########################################
 #### Export datasets for easy loading ####
 ##########################################
 
-save(akde_sf, file = "processed_data/AKDE_fits.RData")
+save(akde_sf, file = "processed_data/AKDE_fits.RData")  #contours
+save(ctmm_fit_best, file = "processed_data/CTMM_fits.RData")  #fitted CTMMs
+save(pkde, file = "processed_data/PKDE_fits.RData")  #fitted PKDE

@@ -48,7 +48,7 @@ ggplot(dat, aes(date, dt)) +
   geom_point() +
   theme_bw() +
   facet_wrap(~id, scales = "free_x")
-#dt show irregularity; will need to use multiple imputation or regularize tracks (unless using continuous-time model)
+#dt shows irregularity; will need to use multiple imputation or regularize tracks (unless using continuous-time model)
 #ID 6470 has different primary time step from other tracks
 
 dat |> 
@@ -161,8 +161,12 @@ rw_fit <- fit_ssm(dat_sf,
                   model = "rw", 
                   time.step = 1,  #1 hr; set to NA if wanting locations at observed timestamps ONLY
                   spdf = FALSE,  #turn off pre-filtering obs
-                  control = ssm_control(verbose = 1))
-toc()  #took 1.5 min to fit
+                  # Error estimation may need to be fine-tuned in GPS data, especially for simulating from model fit
+                  emf = data.frame(lc = "G", emf.x = 0.2, emf.y = 0.2),  #soften GPS precision slightly
+                  control = ssm_control(verbose = 1,  #setting to positive integer prints real-time param est.
+                                        tdist = "norm"),  #Normal (Gaussian) err. distr. more appropriate for GPS
+                  )
+toc()  #took 2 min to fit
 
 
 print(rw_fit)  #all indiv. models converged
@@ -181,7 +185,7 @@ crw_fit <- fit_ssm(dat_sf,
                   model = "crw", 
                   time.step = 1,  #1 hr
                   spdf = FALSE,  #turn off pre-filtering obs
-                  control = ssm_control(verbose = 1))
+                  control = ssm_control(verbose = 1, tdist = "norm"))
 toc()  #took 2.5 min to fit
 
 
@@ -198,11 +202,12 @@ plot(crw_fit, what = "predicted", type = 2, alpha = 0.1, ask = TRUE)  #plot maps
 ### Move persistence model (MP)
 tic()
 mp_fit <- fit_ssm(dat_sf, 
-                   model = "mp", 
-                   time.step = 1,  #1 hr
-                   spdf = FALSE,  #turn off pre-filtering obs
-                   control = ssm_control(verbose = 1))
-toc()  #took 4.25 min to fit
+                  model = "mp", 
+                  time.step = 1,  #1 hr
+                  spdf = FALSE,  #turn off pre-filtering obs
+                  emf = data.frame(lc = "G", emf.x = 0.2, emf.y = 0.2),  #soften GPS precision slightly
+                  control = ssm_control(verbose = 1, tdist = "norm"))
+toc()  #took 3.5 min to fit
 
 
 print(mp_fit)  #all indiv. models converged
@@ -230,8 +235,22 @@ model_selection |>
       arrange(dAICc)
   })
 #2 out of 3 suggest "mp" model is best, but no real hard-and-fast rules
-#so let's stick with the "rw" model since it seems to closely track the observed locs for all IDs
+#Per Ian Jonsen: "Note that AIC statistics can be misleading for time-series models and should not be used as the sole criterion for preferring one model fit over another."
+#so let's stick with the "rw" model since it seems to closely track the observed locs for all IDs; but possible to mix and match like what was done for the AKDE workflow
 
+
+### Check goodness-of-fit (GOF) via one-step-ahead residuals
+#WARNING: especially for large datasets, this can take a LONG time to run
+
+# Calculate residuals
+tic()
+res_rw <- osar(rw_fit)
+toc()  #took x min
+
+# Viz plots of residuals
+plot(res_rw, type = "ts")  #resids over time
+plot(res_rw, type = "qq")  # QQ plot
+plot(res_rw, type = "acf")  #autocorr plot
 
 
 
@@ -270,3 +289,60 @@ ssm_res |>
   select(-c(x, y)) |> 
   rename(x = lon, y = lat) |> 
   shiny_tracks(epsg = 4326)
+
+
+
+
+
+#########################################
+### Simulate tracks from fitted model ###
+#########################################
+
+# Useful if wanting to account for uncertainty in tracks due to location error and time series irregularity
+# Essentially performs *multiple imputation* from posterior estimates of model parameters
+# In this case, the X number of imputed tracks would be used directly for estimating behavioral states and/or habitat selection in place of the average location estimates from the SSM
+
+# Conduct multiple imputation
+mi_tracks <- sim_post(rw_fit, what = "predicted", reps = 50)
+
+plot(mi_tracks[1,], type = "lines", alpha = 0.05, ortho = FALSE)
+plot(mi_tracks[2,], type = "lines", alpha = 0.05)
+plot(mi_tracks[3,], type = "lines", alpha = 0.05)
+
+
+# Convert to data.frame
+mi_tracks2 <- mi_tracks |> 
+  unnest(cols = psims) |> 
+  select(-c(lon, lat)) |>  #remove incorrect coords
+  add_trans_coords(coords = c('x','y'),
+                   proj = "+proj=utm +zone=36 +ellps=WGS84 +units=km +no_defs +south",
+                   new_proj = 4326)
+
+
+# Create custom viz
+ggplot() +
+  #plot imputed tracks (rep # 1-50)
+  geom_path(data = mi_tracks2 |> 
+              filter(id == 5605, rep > 0), aes(lon, lat, group = rep), color = "dodgerblue",
+            alpha = 0.1, linewidth = 0.1) +
+  #plot predicted track (rep = 0)
+  geom_path(data = mi_tracks2 |> 
+              filter(id == 5605, rep == 0), aes(lon, lat), color = "firebrick",
+            linewidth = 0.5) +
+  theme_bw() +
+  coord_equal()
+
+
+
+### Interpolated points between bursts won't be filtered out for behavioral state modelling until after we calculate the movement metrics ###
+
+
+
+
+#######################################
+### Export fitted models and tracks ###
+#######################################
+
+save(rw_fit, mp_fit, file = "processed_data/Session_3/ssm_fits.RData")  #model fit objects
+write_csv(ssm_res, file = "processed_data/Session_3/regularized_tracks.csv")
+write_csv(mi_tracks2, file = "processed_data/Session_3/mi_tracks.csv")

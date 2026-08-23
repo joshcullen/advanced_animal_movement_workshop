@@ -9,6 +9,7 @@ library(tictoc)
 library(terra)
 library(progressr)
 library(furrr)
+library(plotly)
 
 source("R/utils.R")  #load in custom functions
 
@@ -23,11 +24,53 @@ glimpse(dat)
 summary(dat)
 
 
+# Load spatial layers
+africa <- ne_countries(scale = 10, continent = c("Africa"), returnclass = "sf")
+gl_pa <- st_read("raw_data/gltfca_protectedAreasDetailed.shp")
+
+
+
 
 
 ###############################
 #### Wrangle and prep data ####
 ###############################
+
+# Interactively explore whether any hard boundaries blocking movement
+plotly::ggplotly(
+  ggplot() +
+    geom_sf(data = africa) +
+    geom_path(data = dat, aes(lon, lat, group = id, color = factor(id)), alpha = 0.5, linewidth = 0.25) +
+    geom_sf(data = gl_pa, color = "black", fill = NA, linewidth = 0.25) +
+    scale_color_brewer("ID", palette = "Dark2") +
+    theme_bw() +
+    coord_sf(xlim = range(dat$lon),
+             ylim = range(dat$lat))
+)
+# Some hard boundaries limiting, but not fully blocking, movements of IDs 5605 and 6470
+
+
+# Explore movement pattern (i.e., resident vs migratory) w/ net displacement
+dat <- dat |> 
+  add_trans_coords(coords = c('lon','lat'), proj = 4326, new_proj = 32736) |> 
+  group_by(id) |> 
+  arrange(date, .by_group = TRUE) |> 
+  mutate(disp = sqrt((x - x[1])^2 + (y - y[1])^2),  #calc distance from first location
+         disp = disp / 1000)  #convert units from m to km
+
+ggplot(dat) +
+  geom_path(aes(date, disp, color = factor(id)), linewidth = 0.5) +
+  scale_color_brewer("ID", palette = "Dark2") +
+  theme_bw() +
+  facet_wrap(~ id, scales = "free", ncol = 2)
+#you can make the case that IDs 5605 and 6471 make one or more migrations away from primary home range
+#however, these ranging bouts are relatively short-lived (~1-3 months); good to also check variograms to confirm
+#for now, we'll treat the full track as being range-resident
+
+# Let's also do quick check w/ interactive map
+bayesmove::shiny_tracks(dat, epsg = 32736)
+
+
 
 # Switch to Movebank naming conventions
 dat2 <- dat |> 
@@ -63,6 +106,8 @@ dt <- c(1,2,4) %#% "hour"
 
 
 
+
+
 #########################
 #### Plot variograms ####
 #########################
@@ -91,7 +136,7 @@ map(svf, \(x) plot(x, xlim = xlim, level = level))
 map(svf, \(x) plot(x, fraction = 0.65, level = level))
 
 par(mfrow = c(1,1))
-#all variograms look good
+#all variograms look pretty good
 #if dispersal/migratory movements are present, tracks would need to be segmented to only analyze the range-resident components
 
 
@@ -187,6 +232,22 @@ map(ctmm_all, summary)
 ctmm_fit_best <- map(ctmm_fit, pluck, 1)  #"plucks" first list element per track
 
 
+### Explore movement metrics from fitted models
+
+# Home range area ('area')
+# Range-crossing time (tau_position)
+# Directional persistence timescale (tau_velocity)
+# Average speed
+# Expected square displacement over given time period (diffusion)
+
+map(ctmm_fit_best,
+    ~{.x |> 
+        summary() |> 
+        pluck("CI")})
+
+
+
+
 
 
 #######################################
@@ -243,12 +304,11 @@ akde_sf <- map(akde,
 
 
 ### Viz map of estimates
-africa <- ne_countries(scale = 10, continent = c("Africa"), returnclass = "sf") |>
-  st_transform(crs = 32736)
 
 # Plot separately by ID
 ggplot() +
   geom_sf(data = africa |> 
+            st_transform(crs = 32736) |> 
             dplyr::select(-level)) +
   geom_sf(data = akde_sf, aes(color = level), fill = NA, linewidth = 0.5) +
   scale_color_brewer(palette = 'Set1') +
@@ -261,6 +321,7 @@ ggplot() +
 # Plot all tracks per UD level
 ggplot() +
   geom_sf(data = africa |> 
+            st_transform(crs = 32736) |> 
             dplyr::select(-level)) +
   geom_path(data = dat |> 
               add_trans_coords(coords = c('lon','lat'), proj = 4326, new_proj = 32736),
@@ -275,8 +336,7 @@ ggplot() +
 
 # Plotted all tracks and UD levels together
 ggplot() +
-  geom_sf(data = africa |> 
-            st_transform(4326)) +
+  geom_sf(data = africa) +
   geom_path(data = dat, aes(lon, lat, group = id, color = factor(id)), alpha = 0.5, linewidth = 0.25) +
   # Plot 95% isopleths
   geom_sf(data = akde_sf |> 

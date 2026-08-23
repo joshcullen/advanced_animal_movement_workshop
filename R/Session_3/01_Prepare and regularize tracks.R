@@ -64,12 +64,13 @@ dat |>
 ### Check that tracks have sufficient data for analysis ###
 ###########################################################
 
-## GL TFCA
+# Sample size
 dat |>
   group_by(id) |>
   count()
 #min of 4821 obs for ID 6470
 
+# Duration
 dat |>
   group_by(id) |>
   summarize(duration = last(date) - first(date))
@@ -119,13 +120,13 @@ dat3 <- dat2 |>
 
 
 # Create reference table of start and stop times per burst (for later filtering after regularization) 
-keep_windows <- dat3 |>
-  group_by(burst_id) |>
-  summarize(
-    start_time = min(date),
-    end_time = max(date),
-    .groups = "drop"
-  )
+# burst_windows <- dat3 |>
+#   group_by(burst_id) |>
+#   summarize(
+#     start_time = min(date),
+#     end_time = max(date),
+#     .groups = "drop"
+#   )
 
 
 
@@ -346,3 +347,4 @@ ggplot() +
 save(rw_fit, mp_fit, file = "processed_data/Session_3/ssm_fits.RData")  #model fit objects
 write_csv(ssm_res, file = "processed_data/Session_3/regularized_tracks.csv")
 write_csv(mi_tracks2, file = "processed_data/Session_3/mi_tracks.csv")
+write_csv(dat3, file = "processed_data/Session_3/track_bursts.csv")

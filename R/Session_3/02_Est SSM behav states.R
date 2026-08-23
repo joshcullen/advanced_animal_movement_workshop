@@ -1,5 +1,5 @@
 
-### Estimate behavioral state from SSM (continuous states) ###
+### Estimate behavioral states from SSM (continuous states) ###
 
 library(aniMotum)
 library(tidyverse)

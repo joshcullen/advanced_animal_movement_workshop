@@ -145,3 +145,135 @@ calc_ud_overlap <- function(r, index, feature = NULL) {
   
   return(overlap)
 }
+
+#-----------------------------------
+
+### Function to test different sets of initial values in iterative manner
+run_HMMs_internal = function(data, K, Par0, dist, state.names, optMethod, p, seed, ...) {
+  
+  set.seed(seed)
+  
+  # Step length
+  stepMean0 <- runif(K,
+                     min = Par0$step[1:K] / 2,
+                     max = Par0$step[1:K] * 2)
+  stepSD0 <- runif(K,
+                   min = Par0$step[(K+1):(K*2)] / 2,
+                   max = Par0$step[1:K] * 2)
+  whichzero_sl <- which(data$step == 0)
+  propzero_sl <- length(whichzero_sl)/nrow(data)
+  zeromass0_sl <- c(propzero_sl, rep(0, K-1))        #for zero distances by state
+  
+  
+  # Fit model
+  if(propzero_sl > 0) {  #don't include zero mass if no 0s present
+    stepPar0 <- c(stepMean0, stepSD0, zeromass0_sl)
+  } else {
+    stepPar0 <- c(stepMean0, stepSD0)
+  }
+  
+  anglePar0 <- Par0$angle
+  
+  
+  hmm.res <- fitHMM(data = data,
+                    nbStates = K,
+                    Par0 = list(step = stepPar0, angle = anglePar0),
+                    dist = dist,
+                    formula = ~ 1,
+                    # stationary=TRUE, #stationary for a slightly better fit
+                    # estAngleMean = list(angle=TRUE),
+                    stateNames = state.names,
+                    optMethod = optMethod,
+                    ...
+  )
+  
+  # Update progress bar
+  p()
+  
+  return(hmm.res)
+}
+
+
+#-----------------------------------
+
+# Function to run multiple HMMs w/ tweaked initial params for data streams
+# Specific to SL and TA in current form
+run_HMMs = function(data, K, Par0, dist, state.names, optMethod, niter, ncores, ...) {
+  
+  # Convert data.frame into list of identical elements to fit w/ different initial values
+  hmm.list <- map(1:niter, function(x) data)
+  
+  # Fit model
+  future::plan(future::multisession, workers = ncores)
+  seed <- future.apply::future_lapply(seq_along(hmm.list), FUN = function(x) sample(1:5e3, 1),
+                                       future.chunk.size = Inf, future.seed = TRUE)  #set seed per list element
+  
+  progressr::handlers(progressr::handler_progress(incomplete=".", complete="*", current="o", clear = FALSE))
+  progressr::with_progress({
+    #set up progress bar
+    p <- progressr::progressor(steps = length(hmm.list))
+    
+    hmm.res <- furrr::future_map2(.x = hmm.list, .y = seed,
+                                  function(x, s) {
+                                    run_HMMs_internal(data = x,
+                                                     K = K,
+                                                     Par0 = Par0,
+                                                     dist = dist,
+                                                     state.names = state.names,
+                                                     optMethod = optMethod,
+                                                     p = p,
+                                                     seed = s,
+                                                     ...)  #add other args to fitHMM
+                                  },
+                                  .options = furrr::furrr_options(seed = TRUE))
+  })
+  
+  future::plan(future::sequential)
+  
+  # Extract likelihoods of fitted models
+  allnllk <- unlist(map(hmm.res, function(m) m$mod$minimum))
+  
+  # Sort model indices from lowest to highest negative log-likelihood
+  sorted_indices <- order(allnllk, decreasing = FALSE)
+  
+  best_idx <- NULL
+  
+  # Iteratively evaluate models from best fit to worst fit
+  for (idx in sorted_indices) {
+    m <- hmm.res[[idx]]
+    
+    # 1. Optimizer convergence check (code == 0)
+    code_ok <- !is.null(m$mod$code) && m$mod$code == 0
+    
+    # 2. Gradient checks (no Inf or NA)
+    grad_ok <- !is.null(m$mod$gradient) && 
+      !any(is.na(m$mod$gradient)) && 
+      !any(is.infinite(m$mod$gradient))
+    
+    # 3. Hessian check (no NAs)
+    hess_ok <- !is.null(m$mod$hessian) && !anyNA(m$mod$hessian)
+    
+    # 4. Parameter boundary check (flag exploding concentrations > 100)
+    conc_ok <- TRUE
+    if (!is.null(m$mle$angle)) {
+      # von Mises concentrations above 100 indicate numerical boundary explosion
+      if (any(m$mle$angle > 100, na.rm = TRUE)) {
+        conc_ok <- FALSE
+      }
+    }
+    
+    # If all criteria are met, select this model and stop searching
+    if (code_ok && grad_ok && hess_ok && conc_ok) {
+      best_idx <- idx
+      break
+    }
+  }
+  
+  # Fallback if no model passed all criteria
+  if (is.null(best_idx)) {
+    warning("No fitted model met all convergence and parameter sanity criteria. Returning the model with the lowest negative log-likelihood.")
+    best_idx <- sorted_indices[1]
+  }
+  
+  return(hmm.res[[best_idx]])
+}

@@ -7,6 +7,7 @@ library(tidyverse)
 library(rnaturalearth)
 library(sf)
 library(tictoc)
+library(furrr)
 
 source("R/utils.R")
 
@@ -125,6 +126,8 @@ mi_tracks3 <- prepData(data = mi_tracks2, type = 'UTM', coordNames = c('x','y'))
 ### Filter out large temporal gaps (using bursts) ###
 #####################################################
 
+#-- Function moveHMM::splitAtGaps() can do this for you if only fitting HMM and wanting more concise approach --#
+
 burst_windows <- dat |>
   group_by(id, burst_id) |>
   summarize(
@@ -152,6 +155,11 @@ mi_tracks4 <- mi_tracks3 |>
   inner_join(burst_windows,
              by = join_by(ID, between(date, start_time, end_time)))
 
+
+# Example if using moveHMM::splitAtGaps
+# tmp <- dat |> 
+#   rename(ID = id, time = date) |>  #need to follow naming convention
+#   moveHMM::splitAtGaps(maxGap = 8, shortestTrack = 6, units = "hours")
 
 
 
@@ -251,28 +259,158 @@ anglePar0 <- c(0, 0, 1, 5) # (mean_1, mean_2, concentration_1, concentration_2)
 
 # Convert back to "momentuHMMData" class to fit model
 class(ssm_tracks5) <- append("momentuHMMData", class(ssm_tracks5))
-ssm_tracks5$ID <- as.factor(ssm_tracks5$ID)
+ssm_tracks5$ID <- as.factor(ssm_tracks5$ID)  #needs to be factor for TMB optimization
 
 
+# Fit model
 set.seed(2026)
 tic()
-fit_hmm_2states <- fitHMM(data = ssm_tracks5,
-                          nbStates = 2,
-                          dist = list(step = "gamma", angle = "vm"),  #can use other distribs as well
-                          Par0 = list(step = stepPar0, angle = anglePar0),
-                          formula = ~ 1,
-                          estAngleMean = list(angle=TRUE),
-                          # userBounds = list(angle = angle_bounds),  #to help w/ model convergence
-                          stateNames = c('ARS', 'Transit'),
-                          optMethod = "TMB",
-                          ncores = 10,
-                          retryFits = 30,
-                          retrySD = 0.5
-                          )  #may be necessary to run more fits
-toc()  #took 30 sec to run
-#If problems w/ model fit or convergence, you can try 1) changing the random seed value, 2) changing the selected distributions for the movement metrics, 3) redefine new initial values for params, 4) increase number of retryFits
+test_2states <- fitHMM(data = ssm_tracks5,
+                       nbStates = 2,
+                       dist = list(step = "gamma", angle = "vm"),  #can use other distribs as well
+                       Par0 = list(step = stepPar0, angle = anglePar0),
+                       formula = ~ 1,
+                       stationary = TRUE,
+                       estAngleMean = list(angle=TRUE),
+                       stateNames = c('ARS', 'Transit'),
+                       optMethod = "TMB",
+                       # ncores = 10,
+                       # retryFits = 30,
+)
+toc()  #took 4 sec to run
+#If problems w/ model fit or convergence, you can try 1) changing the random seed value, 2) changing the selected distributions for the movement metrics, 3) redefine new initial values for params, 4) increase number of retryFits, 5) adjust retrySD, 6) change optimization method, 7) set 'estAngleMean' to FALSE, 8) set `stationary = FALSE`
 
+
+test_2states
+plot(test_2states)
+plotPR(test_2states, ncores = 5)  #plot of pseudo-residuals show that there are some problems
+
+
+
+
+# Fit w/ random perturbations to ensure global ML found
+#given the way that values are tweaked for built-in 'retryFits' arg, this method may work better sometimes
+set.seed(2026)
+tic()
+fit_hmm_2states <- run_HMMs(data = ssm_tracks5,
+                            K = 2,  #number of states
+                            dist = list(step = "gamma", angle = "vm"),
+                            Par0 = list(step = stepPar0, angle = anglePar0),
+                            state.names = c('ARS','Transit'),
+                            optMethod = "TMB",
+                            niter = 30,
+                            ncores = 10)
+toc()  #took 23 sec to run
 
 fit_hmm_2states
 plot(fit_hmm_2states)
-plotPR(fit_hmm_2states, ncores = 5)  #plot of pseudo-residuals show that there are likely some problems
+plotPR(fit_hmm_2states, ncores = 5)
+
+
+
+
+
+
+
+#######################
+### Fit 3-state HMM ###
+#######################
+
+# Plot time series of SL
+ggplot(ssm_tracks5, aes(date, step)) +
+  geom_line() +
+  theme_bw(base_size = 14) +
+  labs(x = "Date", y = "Step Length (km)") +
+  facet_wrap(~ID, scales = "free_x")
+
+
+# Manually classify to determine initial values
+ssm_tracks6 <- ssm_tracks5 |>
+  group_by(ID) |> 
+  mutate(phase = case_when(step >= 1.5 ~ 'Transit',
+                           step >= 0.5 & step < 1.5 ~ 'Exploratory',
+                           TRUE ~ 'Encamped')) |> 
+  ungroup() |> 
+  data.frame()  #make sure to use data.frame for model fitting
+
+ggplot(ssm_tracks6, aes(date, step)) +
+  geom_path(aes(group = id, color = phase)) +
+  theme_bw() +
+  facet_wrap(~id, scales = "free_x")
+
+ggplot(ssm_tracks6, aes(date, disp)) +
+  geom_path(aes(group = id, color = phase)) +
+  theme_bw() +
+  facet_wrap(~id, scales = "free")
+#looks like it does a decent job
+
+
+# Get summary stats
+ssm_tracks6 |>
+  summarize(.by = phase,
+            mean.step = mean(step, na.rm = T),
+            sd.step = sd(step, na.rm = T))
+#Encamped: mean = 0.2; SD = 0.15
+#Exploratory: mean = 0.85; SD = 0.25
+#Transit: mean = 2.25; SD = 0.75
+
+
+
+
+### Define inits
+
+# initial step distribution natural scale parameters
+stepPar0 <- c(0.2, 0.85, 2.25, 0.15, 0.25, 0.75) # (mu_1, mu_2, mu_3, sd_1, sd_2, sd_3)
+
+# initial angle distribution natural scale parameters
+anglePar0 <- c(1, 2, 3) # (conc_1, conc_2, conc_3); assuming mean fixed at 0
+
+# Convert back to "momentuHMMData" class to fit model
+class(ssm_tracks6) <- append("momentuHMMData", class(ssm_tracks6))
+ssm_tracks6$ID <- as.factor(ssm_tracks6$ID)  #needs to be factor for TMB optimization
+
+
+
+# Fit single model
+set.seed(2026)
+tic()
+test_3states <- fitHMM(data = ssm_tracks6,
+                       nbStates = 3,
+                       dist = list(step = "gamma", angle = "vm"),  #can use other distribs as well
+                       Par0 = list(step = stepPar0, angle = anglePar0),
+                       formula = ~ 1,
+                       stationary = TRUE,
+                       estAngleMean = list(angle=FALSE),  # Changed to help w/ model convergence
+                       stateNames = c('Encamped','Exploratory','Transit'),
+                       optMethod = "TMB"
+)
+toc()  #took 8 sec to run
+
+test_3states
+plot(test_3states)
+plotPR(test_3states, ncores = 5)
+
+
+
+
+
+
+# Fit HMM (w/ random perturbations)
+set.seed(2026)
+tic()
+fit_hmm_3states <- run_HMMs(data = ssm_tracks6,
+                            K = 3,  #number of states
+                            dist = list(step = "gamma", angle = "vm"),
+                            Par0 = list(step = stepPar0, angle = anglePar0),
+                            stationary = TRUE,
+                            estAngleMean = list(angle=FALSE),
+                            state.names = c('Encamped','Exploratory','Transit'),
+                            optMethod = "TMB",
+                            niter = 30,
+                            ncores = 10)
+toc()  #took 30 sec to run
+
+fit_hmm_3states
+fit_hmm_3states$mod$code  #check that it converged (code = 0)
+plot(fit_hmm_3states)
+plotPR(fit_hmm_3states, ncores = 5)

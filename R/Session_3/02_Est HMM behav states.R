@@ -278,7 +278,7 @@ test_2states <- fitHMM(data = ssm_tracks5,
                        # retryFits = 30,
 )
 toc()  #took 4 sec to run
-#If problems w/ model fit or convergence, you can try 1) changing the random seed value, 2) changing the selected distributions for the movement metrics, 3) redefine new initial values for params, 4) increase number of retryFits, 5) adjust retrySD, 6) change optimization method, 7) set 'estAngleMean' to FALSE, 8) set `stationary = FALSE`
+#If problems w/ model fit or convergence, you can try 1) changing the random seed value, 2) changing the selected distributions for the movement metrics, 3) redefine new initial values for params, 4) increase number of retryFits, 5) adjust retrySD, 6) change optimization method, 7) set 'estAngleMean' to FALSE, 8) set `stationary = FALSE`, 9) specify DM, userBounds, and/or workBounds
 
 
 test_2states
@@ -414,3 +414,120 @@ fit_hmm_3states
 fit_hmm_3states$mod$code  #check that it converged (code = 0)
 plot(fit_hmm_3states)
 plotPR(fit_hmm_3states, ncores = 5)
+
+
+
+
+
+
+
+#######################
+### Fit 4-state HMM ###
+#######################
+
+# Plot time series of SL
+ggplot(ssm_tracks6, aes(date, step)) +
+  geom_line() +
+  theme_bw(base_size = 14) +
+  labs(x = "Date", y = "Step Length (km)") +
+  facet_wrap(~ID, scales = "free_x")
+
+
+# Manually classify to determine initial values
+ssm_tracks7 <- ssm_tracks6 |>
+  group_by(ID) |> 
+  mutate(phase = case_when(step >= 2 ~ 'Transit',
+                           step >= 1 & step < 2 ~ 'Exploratory',
+                           step >= 0.25 & step < 1 ~ 'ARS',
+                           TRUE ~ 'Resting'),
+         phase = factor(phase, levels = c('Resting','ARS','Exploratory','Transit'))) |> 
+  ungroup() |> 
+  data.frame()  #make sure to use data.frame for model fitting
+
+ggplot(ssm_tracks7, aes(date, step)) +
+  geom_path(aes(group = id, color = phase)) +
+  theme_bw() +
+  facet_wrap(~id, scales = "free_x")
+
+ggplot(ssm_tracks7, aes(date, disp)) +
+  geom_path(aes(group = id, color = phase)) +
+  theme_bw() +
+  facet_wrap(~id, scales = "free")
+#looks like it does a decent job
+
+
+# Get summary stats
+ssm_tracks7 |>
+  summarize(.by = phase,
+            mean.step = mean(step, na.rm = T),
+            sd.step = sd(step, na.rm = T))
+#Resting: mean = 0.1; SD = 0.05
+#ARS: mean = 0.5; SD = 0.2
+#Exploratory: mean = 1.35; SD = 0.25
+#Transit: mean = 2.5; SD = 0.75
+
+
+
+
+
+### Define inits
+
+# initial step distribution natural scale parameters
+stepPar0 <- c(0.1, 0.5, 1.35, 2.5,  #(mu_1, mu_2, mu_3, mu_4)
+              0.05, 0.2, 0.25, 0.75)  #(sd_1, sd_2, sd_3, sd_4)
+
+# initial angle distribution natural scale parameters
+# anglePar0 <- c(1, 1, 2, 3) # (conc_1, conc_2, conc_3, conc_4); assuming mean fixed at 0
+anglePar0 <- c(0.25, 0.4, 0.65, 0.8)  #(conc_1, conc_2, conc_3, conc_4)
+
+# Convert back to "momentuHMMData" class to fit model
+class(ssm_tracks7) <- append("momentuHMMData", class(ssm_tracks7))
+ssm_tracks7$ID <- as.factor(ssm_tracks7$ID)  #needs to be factor for TMB optimization
+
+
+
+# Fit single model
+set.seed(2026)
+tic()
+test_4states <- fitHMM(data = ssm_tracks7 |> 
+                         filter(ID != 6470),
+                       nbStates = 4,
+                       dist = list(step = "gamma", angle = "wrpcauchy"),  #can use other distribs as well
+                       Par0 = list(step = stepPar0, angle = anglePar0),
+                       formula = ~ 1,
+                       stationary = TRUE,
+                       estAngleMean = list(angle=FALSE),  # Changed to help w/ model convergence
+                       stateNames = c('Resting','ARS','Exploratory','Transit'),
+                       optMethod = "TMB"
+)
+toc()  #took 6 sec to run
+
+test_4states
+plot(test_4states)
+plotPR(test_4states, ncores = 5)
+
+
+
+
+
+
+# Fit HMM (w/ random perturbations)
+set.seed(2026)
+tic()
+fit_hmm_4states <- run_HMMs(data = ssm_tracks7 |> 
+                              filter(ID != 6470),
+                            K = 4,  #number of states
+                            dist = list(step = "gamma", angle = "vm"),
+                            Par0 = list(step = stepPar0, angle = anglePar0),
+                            stationary = TRUE,
+                            estAngleMean = list(angle=FALSE),
+                            state.names = c('Resting','ARS','Exploratory','Transit'),
+                            optMethod = "TMB",
+                            niter = 30,
+                            ncores = 10)
+toc()  #took 30 sec to run
+
+fit_hmm_4states
+fit_hmm_4states$mod$code  #check that it converged (code = 0)
+plot(fit_hmm_4states)
+plotPR(fit_hmm_4states, ncores = 5)

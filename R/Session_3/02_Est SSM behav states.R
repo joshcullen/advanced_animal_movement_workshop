@@ -48,6 +48,7 @@ gl_pa <- st_read("raw_data/gltfca_protectedAreasDetailed.shp")
 ### From average tracks
 
 ## Individual move persistence model ('mpm') estimates behavioral states separately across IDs
+#Only really needed if using the "rw" or "crw" models
 tic()
 rw_fit_g <- fit_mpm(rw_fit, what = "predicted", model = "mpm",
                     control = mpm_control(verbose = 1))
@@ -57,6 +58,19 @@ toc()  #took 1 min to fit
 print(rw_fit_g)  #all models converged
 plot(rw_fit_g)
 # not really clear what's happening at this fine temporal scale
+
+
+# Zoom in on time series to explore diel patterns
+tmp <- grab(rw_fit_g, normalise = TRUE)
+
+plotly::ggplotly(
+  ggplot(tmp |> 
+           filter(id == 6469)) +
+    geom_point(aes(date, g, color = g)) +
+    scale_color_viridis_c(expression(gamma), option = "plasma") +
+    theme_bw(base_size = 14)
+)
+
 
 
 ## Try fitting SSM at coarser time scale and re-evaluating
@@ -72,7 +86,7 @@ rw_fit2 <- fit_ssm(dat_sf,
                    time.step = 8,  #8 hr
                    spdf = FALSE,
                    control = ssm_control(verbose = 1, tdist = "norm"))
-toc()  #took 1 min to fit
+toc()  #took 1.5 min to fit
 
 
 print(rw_fit2)  #all indiv. models converged
@@ -86,7 +100,7 @@ plot(rw_fit2, what = "predicted", type = 2, alpha = 0.1, ask = TRUE)  #plot maps
 tic()
 rw_fit_g8h <- fit_mpm(rw_fit2, what = "predicted", model = "mpm",
                       control = mpm_control(verbose = 1))
-toc()  #took 8 sec to fit
+toc()  #took 9 sec to fit
 
 print(rw_fit_g8h)  #all models converged
 plot(rw_fit_g8h)
@@ -155,11 +169,17 @@ burst_windows <- dat |>
 # Filter fitted tracks (i.e., remove interpolated section during long gaps)
 rw_behav2 <- rw_behav |> 
   inner_join(burst_windows,
-             by = join_by(id, between(date, start_time, end_time)))
+             by = join_by(id, between(date, start_time, end_time))) |> 
+  group_by(id, burst_id) |>
+  filter(n() >= 6) |>  #remove bursts shorter than 6 hrs
+  ungroup()
 
 mp_behav2 <- mp_behav |> 
   inner_join(burst_windows,
-             by = join_by(id, between(date, start_time, end_time)))
+             by = join_by(id, between(date, start_time, end_time))) |> 
+  group_by(id, burst_id) |>
+  filter(n() >= 6) |>  #remove bursts shorter than 6 hrs
+  ungroup()
 
 
 
@@ -190,7 +210,7 @@ ggplot() +
 
 
 # Interactive mapping
-bayesmove::shiny_tracks(data = mp_behav2,
+bayesmove::shiny_tracks(data = rw_behav2,
                         epsg = "+proj=utm +zone=36 +ellps=WGS84 +units=km +no_defs +south")
 
 

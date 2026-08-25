@@ -143,17 +143,26 @@ burst_windows <- dat |>
 # Filter tracks (i.e., remove interpolated section during long gaps)
 crw_dat2 <- crw_dat |> 
   inner_join(burst_windows,
-             by = join_by(ID, between(date, start_time, end_time)))
+             by = join_by(ID, between(date, start_time, end_time))) |> 
+  group_by(id, burst_id) |>
+  filter(n() >= 6) |>  #remove bursts shorter than 6 hrs
+  ungroup()
 
 ssm_tracks4 <- ssm_tracks3 |> 
   inner_join(burst_windows,
-             by = join_by(ID, between(date, start_time, end_time)))
+             by = join_by(ID, between(date, start_time, end_time))) |> 
+  group_by(id, burst_id) |>
+  filter(n() >= 6) |>  #remove bursts shorter than 6 hrs
+  ungroup()
 
 mi_tracks4 <- mi_tracks3 |> 
   mutate(ID_sim = ID,
          ID = str_match(ID_sim, "[0-9]*")) |>  #need orig ID to join w/ 'burst_windows'
   inner_join(burst_windows,
-             by = join_by(ID, between(date, start_time, end_time)))
+             by = join_by(ID, between(date, start_time, end_time))) |> 
+  group_by(id, burst_id) |>
+  filter(n() >= 6) |>  #remove bursts shorter than 6 hrs
+  ungroup()
 
 
 # Example if using moveHMM::splitAtGaps
@@ -210,18 +219,20 @@ ggplot(ssm_tracks4, aes(date, angle)) +
 
 ssm_tracks5 <- ssm_tracks4 |>
   group_by(ID) |> 
-  mutate(disp = sqrt((x - x[1])^2 + (y - y[1])^2),  #calc net displacement
-         phase = case_when(step > 0.75 ~ 'Transit',
-                           TRUE ~ 'ARS')) |> 
+  mutate(disp = sqrt((x - x[1])^2 + (y - y[1])^2)) |>  #calc net displacement
   ungroup() |> 
   data.frame()  #make sure to use data.frame for model fitting
 
-ggplot(ssm_tracks5, aes(date, step)) +
+tmp <- ssm_tracks5 |> 
+  mutate(phase = case_when(step > 0.75 ~ 'Transit',
+                           TRUE ~ 'ARS'))
+
+ggplot(tmp, aes(date, step)) +
   geom_path(aes(group = id, color = phase)) +
   theme_bw() +
   facet_wrap(~id, scales = "free_x")
 
-ggplot(ssm_tracks5, aes(date, disp)) +
+ggplot(tmp, aes(date, disp)) +
   geom_path(aes(group = id, color = phase)) +
   theme_bw() +
   facet_wrap(~id, scales = "free")
@@ -229,13 +240,13 @@ ggplot(ssm_tracks5, aes(date, disp)) +
 
 
 # Check for obs w/ SL = 0
-sum(ssm_tracks5$step == 0)  #none
+sum(tmp$step == 0)  #none
 
 
 
 
 # Get summary stats
-ssm_tracks5 |>
+tmp |>
   summarize(.by = phase,
             mean.step = mean(step, na.rm = T),
             sd.step = sd(step, na.rm = T))
@@ -255,7 +266,8 @@ ssm_tracks5 |>
 stepPar0 <- c(0.25, 1.5, 0.2, 0.75) # (mu_1, mu_2, sd_1, sd_2)
 
 # initial angle distribution natural scale parameters
-anglePar0 <- c(0, 0, 1, 5) # (mean_1, mean_2, concentration_1, concentration_2)
+# anglePar0 <- c(0, 0, 0.5, 0.9) # (mean_1, mean_2, concentration_1, concentration_2)
+anglePar0 <- c(0.5, 0.9) # (concentration_1, concentration_2)
 
 # Convert back to "momentuHMMData" class to fit model
 class(ssm_tracks5) <- append("momentuHMMData", class(ssm_tracks5))
@@ -267,17 +279,17 @@ set.seed(2026)
 tic()
 test_2states <- fitHMM(data = ssm_tracks5,
                        nbStates = 2,
-                       dist = list(step = "gamma", angle = "vm"),  #can use other distribs as well
+                       dist = list(step = "gamma", angle = "wrpcauchy"),  #can use other distribs as well
                        Par0 = list(step = stepPar0, angle = anglePar0),
                        formula = ~ 1,
                        stationary = TRUE,
-                       estAngleMean = list(angle=TRUE),
+                       estAngleMean = list(angle=FALSE),
                        stateNames = c('ARS', 'Transit'),
                        optMethod = "TMB",
                        # ncores = 10,
-                       # retryFits = 30,
+                       # retryFits = 30
 )
-toc()  #took 4 sec to run
+toc()  #took 4 sec to run; 43 sec w/ retryFits
 #If problems w/ model fit or convergence, you can try 1) changing the random seed value, 2) changing the selected distributions for the movement metrics, 3) redefine new initial values for params, 4) increase number of retryFits, 5) adjust retrySD, 6) change optimization method, 7) set 'estAngleMean' to FALSE, 8) set `stationary = FALSE`, 9) specify DM, userBounds, and/or workBounds
 
 
@@ -294,15 +306,18 @@ set.seed(2026)
 tic()
 fit_hmm_2states <- run_HMMs(data = ssm_tracks5,
                             K = 2,  #number of states
-                            dist = list(step = "gamma", angle = "vm"),
+                            dist = list(step = "gamma", angle = "wrpcauchy"),
                             Par0 = list(step = stepPar0, angle = anglePar0),
+                            stationary = TRUE,
+                            estAngleMean = list(angle=FALSE),
                             state.names = c('ARS','Transit'),
                             optMethod = "TMB",
                             niter = 30,
                             ncores = 10)
-toc()  #took 23 sec to run
+toc()  #took 20 sec to run
 
 fit_hmm_2states
+fit_hmm_2states$mod$code  #check that it converged (code = 0)
 plot(fit_hmm_2states)
 plotPR(fit_hmm_2states, ncores = 5)
 
@@ -325,7 +340,7 @@ ggplot(ssm_tracks5, aes(date, step)) +
 
 
 # Manually classify to determine initial values
-ssm_tracks6 <- ssm_tracks5 |>
+tmp <- ssm_tracks5 |>
   group_by(ID) |> 
   mutate(phase = case_when(step >= 1.5 ~ 'Transit',
                            step >= 0.5 & step < 1.5 ~ 'Exploratory',
@@ -333,12 +348,12 @@ ssm_tracks6 <- ssm_tracks5 |>
   ungroup() |> 
   data.frame()  #make sure to use data.frame for model fitting
 
-ggplot(ssm_tracks6, aes(date, step)) +
+ggplot(tmp, aes(date, step)) +
   geom_path(aes(group = id, color = phase)) +
   theme_bw() +
   facet_wrap(~id, scales = "free_x")
 
-ggplot(ssm_tracks6, aes(date, disp)) +
+ggplot(tmp, aes(date, disp)) +
   geom_path(aes(group = id, color = phase)) +
   theme_bw() +
   facet_wrap(~id, scales = "free")
@@ -346,7 +361,7 @@ ggplot(ssm_tracks6, aes(date, disp)) +
 
 
 # Get summary stats
-ssm_tracks6 |>
+tmp |>
   summarize(.by = phase,
             mean.step = mean(step, na.rm = T),
             sd.step = sd(step, na.rm = T))
@@ -363,20 +378,20 @@ ssm_tracks6 |>
 stepPar0 <- c(0.2, 0.85, 2.25, 0.15, 0.25, 0.75) # (mu_1, mu_2, mu_3, sd_1, sd_2, sd_3)
 
 # initial angle distribution natural scale parameters
-anglePar0 <- c(1, 2, 3) # (conc_1, conc_2, conc_3); assuming mean fixed at 0
+anglePar0 <- c(0.5, 0.75, 0.9) # (conc_1, conc_2, conc_3); assuming mean fixed at 0
 
 # Convert back to "momentuHMMData" class to fit model
-class(ssm_tracks6) <- append("momentuHMMData", class(ssm_tracks6))
-ssm_tracks6$ID <- as.factor(ssm_tracks6$ID)  #needs to be factor for TMB optimization
+# class(ssm_tracks5) <- append("momentuHMMData", class(ssm_tracks5))
+# ssm_tracks5$ID <- as.factor(ssm_tracks5$ID)  #needs to be factor for TMB optimization
 
 
 
 # Fit single model
 set.seed(2026)
 tic()
-test_3states <- fitHMM(data = ssm_tracks6,
+test_3states <- fitHMM(data = ssm_tracks5,
                        nbStates = 3,
-                       dist = list(step = "gamma", angle = "vm"),  #can use other distribs as well
+                       dist = list(step = "gamma", angle = "wrpcauchy"),  #can use other distribs as well
                        Par0 = list(step = stepPar0, angle = anglePar0),
                        formula = ~ 1,
                        stationary = TRUE,
@@ -384,7 +399,7 @@ test_3states <- fitHMM(data = ssm_tracks6,
                        stateNames = c('Encamped','Exploratory','Transit'),
                        optMethod = "TMB"
 )
-toc()  #took 8 sec to run
+toc()  #took 7 sec to run
 
 test_3states
 plot(test_3states)
@@ -398,9 +413,9 @@ plotPR(test_3states, ncores = 5)
 # Fit HMM (w/ random perturbations)
 set.seed(2026)
 tic()
-fit_hmm_3states <- run_HMMs(data = ssm_tracks6,
+fit_hmm_3states <- run_HMMs(data = ssm_tracks5,
                             K = 3,  #number of states
-                            dist = list(step = "gamma", angle = "vm"),
+                            dist = list(step = "gamma", angle = "wrpcauchy"),
                             Par0 = list(step = stepPar0, angle = anglePar0),
                             stationary = TRUE,
                             estAngleMean = list(angle=FALSE),
@@ -426,7 +441,7 @@ plotPR(fit_hmm_3states, ncores = 5)
 #######################
 
 # Plot time series of SL
-ggplot(ssm_tracks6, aes(date, step)) +
+ggplot(ssm_tracks5, aes(date, step)) +
   geom_line() +
   theme_bw(base_size = 14) +
   labs(x = "Date", y = "Step Length (km)") +
@@ -434,22 +449,22 @@ ggplot(ssm_tracks6, aes(date, step)) +
 
 
 # Manually classify to determine initial values
-ssm_tracks7 <- ssm_tracks6 |>
+tmp <- ssm_tracks5 |>
   group_by(ID) |> 
-  mutate(phase = case_when(step >= 2 ~ 'Transit',
-                           step >= 1 & step < 2 ~ 'Exploratory',
-                           step >= 0.25 & step < 1 ~ 'ARS',
-                           TRUE ~ 'Resting'),
-         phase = factor(phase, levels = c('Resting','ARS','Exploratory','Transit'))) |> 
+  mutate(phase = case_when(step >= 3 ~ 'Ranging',
+                           step >= 1.5 & step < 3 ~ 'Transit',
+                           step >= 0.5 & step < 1.5 ~ 'Exploratory',
+                           step < 0.5 ~ 'Encamped'),
+         phase = factor(phase, levels = c('Encamped','Exploratory','Transit','Ranging'))) |> 
   ungroup() |> 
   data.frame()  #make sure to use data.frame for model fitting
 
-ggplot(ssm_tracks7, aes(date, step)) +
+ggplot(tmp, aes(date, step)) +
   geom_path(aes(group = id, color = phase)) +
   theme_bw() +
   facet_wrap(~id, scales = "free_x")
 
-ggplot(ssm_tracks7, aes(date, disp)) +
+ggplot(tmp, aes(date, disp)) +
   geom_path(aes(group = id, color = phase)) +
   theme_bw() +
   facet_wrap(~id, scales = "free")
@@ -457,14 +472,14 @@ ggplot(ssm_tracks7, aes(date, disp)) +
 
 
 # Get summary stats
-ssm_tracks7 |>
+tmp |>
   summarize(.by = phase,
             mean.step = mean(step, na.rm = T),
             sd.step = sd(step, na.rm = T))
-#Resting: mean = 0.1; SD = 0.05
-#ARS: mean = 0.5; SD = 0.2
-#Exploratory: mean = 1.35; SD = 0.25
-#Transit: mean = 2.5; SD = 0.75
+#Encamped: mean = 0.2; SD = 0.15
+#Exploratory: mean = 0.85; SD = 0.25
+#Transit: mean = 2; SD = 0.4
+#Ranging: mean = 3.5; SD = 0.7
 
 
 
@@ -473,34 +488,32 @@ ssm_tracks7 |>
 ### Define inits
 
 # initial step distribution natural scale parameters
-stepPar0 <- c(0.1, 0.5, 1.35, 2.5,  #(mu_1, mu_2, mu_3, mu_4)
-              0.05, 0.2, 0.25, 0.75)  #(sd_1, sd_2, sd_3, sd_4)
+stepPar0 <- c(0.2, 0.85, 2, 3.5,  #(mu_1, mu_2, mu_3, mu_4)
+              0.15, 0.25, 0.4, 0.7)  #(sd_1, sd_2, sd_3, sd_4)
 
 # initial angle distribution natural scale parameters
-# anglePar0 <- c(1, 1, 2, 3) # (conc_1, conc_2, conc_3, conc_4); assuming mean fixed at 0
-anglePar0 <- c(0.25, 0.4, 0.65, 0.8)  #(conc_1, conc_2, conc_3, conc_4)
+anglePar0 <- c(0.4, 0.65, 0.8, 0.9)  #(conc_1, conc_2, conc_3, conc_4)
 
 # Convert back to "momentuHMMData" class to fit model
-class(ssm_tracks7) <- append("momentuHMMData", class(ssm_tracks7))
-ssm_tracks7$ID <- as.factor(ssm_tracks7$ID)  #needs to be factor for TMB optimization
+# class(ssm_tracks5) <- append("momentuHMMData", class(ssm_tracks5))
+# ssm_tracks5$ID <- as.factor(ssm_tracks5$ID)  #needs to be factor for TMB optimization
 
 
 
 # Fit single model
 set.seed(2026)
 tic()
-test_4states <- fitHMM(data = ssm_tracks7 |> 
-                         filter(ID != 6470),
+test_4states <- fitHMM(data = ssm_tracks5,
                        nbStates = 4,
                        dist = list(step = "gamma", angle = "wrpcauchy"),  #can use other distribs as well
                        Par0 = list(step = stepPar0, angle = anglePar0),
                        formula = ~ 1,
-                       stationary = TRUE,
+                       stationary = FALSE,  #changed to try to get model to converge
                        estAngleMean = list(angle=FALSE),  # Changed to help w/ model convergence
-                       stateNames = c('Resting','ARS','Exploratory','Transit'),
+                       stateNames = c('Encamped','Exploratory','Transit','Ranging'),
                        optMethod = "TMB"
 )
-toc()  #took 6 sec to run
+toc()  #took 12 sec to run
 
 test_4states
 plot(test_4states)
@@ -514,20 +527,174 @@ plotPR(test_4states, ncores = 5)
 # Fit HMM (w/ random perturbations)
 set.seed(2026)
 tic()
-fit_hmm_4states <- run_HMMs(data = ssm_tracks7 |> 
-                              filter(ID != 6470),
+fit_hmm_4states <- run_HMMs(data = ssm_tracks5,
                             K = 4,  #number of states
-                            dist = list(step = "gamma", angle = "vm"),
+                            dist = list(step = "gamma", angle = "wrpcauchy"),
                             Par0 = list(step = stepPar0, angle = anglePar0),
                             stationary = TRUE,
                             estAngleMean = list(angle=FALSE),
-                            state.names = c('Resting','ARS','Exploratory','Transit'),
+                            state.names = c('Encamped','Exploratory','Transit','Ranging'),
                             optMethod = "TMB",
                             niter = 30,
                             ncores = 10)
-toc()  #took 30 sec to run
+toc()  #took 45 sec to run
 
 fit_hmm_4states
 fit_hmm_4states$mod$code  #check that it converged (code = 0)
 plot(fit_hmm_4states)
 plotPR(fit_hmm_4states, ncores = 5)
+
+
+
+
+
+###############################
+### Perform order selection ###
+###############################
+
+#we're now going to select the "best" model of the 3 fitted
+#using a combination of factors (laid out in more detail in Pohle et al., 2017)
+#general recommendation is that you typically can only estimate a max of M + 1 state, where 'M' represents the number of data streams analyzed; so for only 2 data streams (SL, TA), 3 is probably our max
+
+# AIC comparison
+AIC(fit_hmm_2states, fit_hmm_3states, fit_hmm_4states)
+#4-state model "best" per AIC; but IC often overfits, so take w/ grain of salt
+
+# BIC comparison
+BIC(fit_hmm_2states, fit_hmm_3states, fit_hmm_4states)
+#4-state model "best" per BIC; but IC often overfits, so take w/ grain of salt
+
+
+# Compare state-dependent density distributions and annotated tracks
+plot(fit_hmm_2states)
+plot(fit_hmm_3states)
+plot(fit_hmm_4states)
+#all look reasonable, but 4-state model probs overfits
+#a case could potentially be made for the 4-state model, but 'Exploratory' and 'Transit' are similar enough that they probably should be merged together
+#so we'll select the 3-state model here as the best-fitting of the three
+
+
+
+
+
+#############################################
+### Explore 3-state model more thoroughly ###
+#############################################
+
+# Explore time series of state probabilities
+plotStates(fit_hmm_3states)
+
+# Annotate tracks w/ model results
+ssm_tracks6 <- ssm_tracks5 |> 
+  mutate(state_vit = viterbi(fit_hmm_3states),  #use Viterbi algorithm (most likely sequence)
+         state_vit = case_when(state_vit == 1 ~ 'Encamped',
+                               state_vit == 2 ~ 'Exploratory',
+                               state_vit == 3 ~ 'Transit')) |> 
+  cbind(stateProbs(fit_hmm_3states)) |>  #uses forward-backward algorithm (probabilities of each state)
+  mutate(state_fb = case_when(  #using est. from forward-backward algorithm, assign states when likely (Pr > 50%)
+    Encamped > 0.5 ~ "Encamped",
+    Exploratory > 0.5 ~ "Exploratory",
+    Transit > 0.5 ~ "Transit",
+    TRUE ~ 'Unclassified'  # Assigns NA if no value is > 0.5
+  ))
+
+# Any discrepencies between the 2 methods for assigning states?
+all.equal(ssm_tracks6$state_vit, ssm_tracks6$state_fb)
+#looks like there are some differences (1749 to be exact)
+
+# Any 'Unclassified' obs?
+table(ssm_tracks6$state_fb)  #5 obs
+
+
+#-- In general, I like to use the approach of assigning states based on the confidence in the state estimates. But plenty of people use and publish the Viterbi seq. of states too --#
+
+
+
+
+############################
+### Viz annotated tracks ###
+############################
+
+# Plot all annotated tracks together
+ggplot() +
+  geom_sf(data = africa) +
+  geom_path(data = ssm_tracks6, aes(lon, lat, group = id), alpha = 0.5, linewidth = 0.25) +
+  geom_point(data = ssm_tracks6, aes(lon, lat, color = state_fb), alpha = 0.5, size = 1) +
+  geom_sf(data = gl_pa, color = "black", fill = NA, linewidth = 0.25) +
+  scale_color_manual("State", values = c(RColorBrewer::brewer.pal(n = 3, "Dark2"), "grey")) +
+  theme_bw() +
+  coord_sf(xlim = range(dat$lon),
+           ylim = range(dat$lat))
+
+
+# Facet by ID
+ggplot() +
+  geom_sf(data = africa) +
+  geom_path(data = ssm_tracks6, aes(lon, lat, group = id), alpha = 0.5, linewidth = 0.25) +
+  geom_point(data = ssm_tracks6, aes(lon, lat, color = state_fb), alpha = 0.5, size = 1) +
+  geom_sf(data = gl_pa, color = "black", fill = NA, linewidth = 0.25) +
+  scale_color_manual("State", values = c(RColorBrewer::brewer.pal(n = 3, "Dark2"), "grey")) +
+  theme_bw() +
+  coord_sf(xlim = range(dat$lon),
+           ylim = range(dat$lat)) +
+  facet_wrap(~id, ncol = 2)
+
+
+for (i in 1:n_distinct(ssm_tracks6$id)) {
+  print(
+    ggplot() +
+      geom_sf(data = africa) +
+      geom_path(data = ssm_tracks6, aes(lon, lat, group = id), alpha = 0.5, linewidth = 0.25) +
+      geom_point(data = ssm_tracks6, aes(lon, lat, color = state_fb), alpha = 0.5, size = 1) +
+      geom_sf(data = gl_pa, color = "black", fill = NA, linewidth = 0.25) +
+      scale_color_manual("State", values = c(RColorBrewer::brewer.pal(n = 3, "Dark2"), "grey")) +
+      theme_bw() +
+      coord_sf(xlim = range(dat$lon),
+               ylim = range(dat$lat)) +
+      ggforce::facet_wrap_paginate(~id, ncol = 1, nrow = 1, page = i)
+  )
+}
+
+
+# Separate by state
+for (i in 1:n_distinct(ssm_tracks6$id)) {
+  print(
+    ggplot() +
+      geom_sf(data = africa) +
+      geom_path(data = ssm_tracks6 |> 
+                  select(-state_fb), aes(lon, lat, group = id), alpha = 0.5, linewidth = 0.25) +
+      geom_point(data = ssm_tracks6, aes(lon, lat, color = state_fb), alpha = 0.5, size = 1) +
+      geom_sf(data = gl_pa, color = "black", fill = NA, linewidth = 0.25) +
+      scale_color_manual("State", values = c(RColorBrewer::brewer.pal(n = 3, "Dark2"), "grey")) +
+      theme_bw() +
+      coord_sf(xlim = range(dat$lon),
+               ylim = range(dat$lat)) +
+      ggforce::facet_wrap_paginate(~state_fb, ncol = 1, nrow = 1, page = i)
+  )
+}
+
+
+# Explore state probabilities (e.g., 'Transit' in ID 6469)
+ggplot() +
+  geom_path(data = ssm_tracks6 |> 
+              filter(id == 6469), aes(lon, lat, group = id), alpha = 0.5, linewidth = 0.25) +
+  geom_point(data = ssm_tracks6 |> 
+               filter(id == 6469), aes(lon, lat, color = Transit), alpha = 0.5, size = 1) +
+  scale_color_distiller("Pr(Transit)", palette = "Spectral", direction = -1, limits = c(0,1)) +
+  theme_bw() +
+  coord_equal()
+
+
+
+# Interactively explore results
+ssm_tracks6 |> 
+  bayesmove::shiny_tracks(epsg = "+proj=utm +zone=36 +ellps=WGS84 +units=km +no_defs +south")
+
+
+
+
+###############################
+### Export annotated tracks ###
+###############################
+
+write_csv(ssm_tracks6, "processed_data/Session_3/HMM_3state_simple.csv")

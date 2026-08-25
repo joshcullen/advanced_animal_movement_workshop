@@ -66,7 +66,7 @@ dat2 |>
   group_by(id, date) |>  #define groups as a timestamp per ID
   filter(n() > 1) |>  #only keep records where >1 occur (i.e., duplicates)
   ungroup()
-#3 pairs total; 2 for ID 5605, 1 for ID 6471
+#4 pairs total; 2 for ID 5605, 1 for ID 6469, 1 for ID 6471
 
 # Remove duplicate records
 dat3 <- dat2 |>

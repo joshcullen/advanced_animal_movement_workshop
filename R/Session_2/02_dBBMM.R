@@ -137,13 +137,13 @@ ggplot() +
   theme_bw() +
   theme(panel.grid = element_blank())
 
-#6470
+#6469
 ggplot() +
-  geom_path(data = dat_list$`6470`, aes(x, y), linewidth = 0.5, alpha = 0.25) +
+  geom_path(data = dat_list$`6469`, aes(x, y), linewidth = 0.5, alpha = 0.25) +
   geom_sf(data = contours2 |>
-            filter(id == 6470), aes(color = level), fill = NA, linewidth = 0.75) +
+            filter(id == 6469), aes(color = level), fill = NA, linewidth = 0.75) +
   scale_color_brewer(palette = 'Set1') +
-  labs(title = 'ID 6470') +
+  labs(title = 'ID 6469') +
   theme_bw() +
   theme(panel.grid = element_blank())
 
@@ -201,10 +201,10 @@ rasters2 <- create_shared_grid(data = bind_rows(dat_list),
 
 ## Quanitfy overlap among UDs
 
-# Calculate Volume of Intersection (VI) index
+# Calculate Volume of Intersection (VI) index; symmetric, so we only need one set of pairs
 calc_ud_overlap(rasters2, index = "vi")
 
-# Calculate Bhattacharyya's Affinity (BA) index
+# Calculate Bhattacharyya's Affinity (BA) index; symmetric, so we only need one set of pairs
 calc_ud_overlap(rasters2, index = "ba")
 
 

@@ -22,13 +22,14 @@ dat <- read_csv("processed_data/Session_3/track_bursts.csv")
 # Load regularized tracks (mean est.)
 ssm_tracks <- read_csv("processed_data/Session_3/regularized_tracks.csv") |> 
   arrange(id, date) |>  #make sure data is properly sorted
-  mutate(id = as.character(id))  #IDs are better handled as 'character'
+  mutate(id_orig = as.character(id_orig))  #IDs are better handled as 'character'
 
 # Load fitted SSM objects
 load(file = "processed_data/Session_3/ssm_fits.RData")
 
 # Load multiple imputations from fitted SSM
-mi_tracks <- read_csv(file = "processed_data/Session_3/mi_tracks.csv")
+mi_tracks <- read_csv(file = "processed_data/Session_3/mi_tracks.csv") |> 
+  mutate(id_orig = as.character(id_orig))  #IDs are better handled as 'character'
 
 
 
@@ -61,11 +62,13 @@ plot(rw_fit_g)
 
 
 # Zoom in on time series to explore diel patterns
-tmp <- grab(rw_fit_g, normalise = TRUE)
+tmp <- grab(rw_fit_g, normalise = TRUE) |> 
+  mutate(id_orig = as.vector(str_match(id, "[0-9]+")),
+         .after = id)
 
 plotly::ggplotly(
   ggplot(tmp |> 
-           filter(id == 6469)) +
+           filter(id_orig == 6469)) +
     geom_point(aes(date, g, color = g)) +
     scale_color_viridis_c(expression(gamma), option = "plasma") +
     theme_bw(base_size = 14)
@@ -74,7 +77,18 @@ plotly::ggplotly(
 
 
 ## Try fitting SSM at coarser time scale and re-evaluating
-dat_sf <- dat |> 
+
+# Remove bursts w/ few points (e.g., n < 30)
+dat2 <- dat |>
+  group_by(id, burst_id) |>
+  filter(n() >= 30) |>
+  group_by(id) |>
+  mutate(burst_id = dense_rank(burst_id)) |>  #ensure all bursts are consecutive and begin at 1
+  ungroup() |>
+  mutate(burst_id = paste(id, burst_id, sep = "_"))  #create unique burst IDs for model fitting
+
+dat_sf <- dat2 |> 
+  rename(id_orig = id, id = burst_id) |>  #treat 'burst_id' as primary ID for model fitting
   relocate(lon, .before = lat) |>  #fix column order for aniMotum::fit_ssm()
   mutate(lc = 'G', .after = date) |>  #need to specify "location class" (G = GPS)
   st_as_sf(coords = c('lon','lat'), crs = 4326, remove = FALSE) |>  #convert to spatial object
@@ -147,40 +161,14 @@ plot(mp_fit2, type = 4, normalise = TRUE)
 rw_behav <- join(ssm = rw_fit,
                  mpm = rw_fit_g,
                  what.ssm = "predicted",
-                 normalise = TRUE)
+                 normalise = TRUE) |> 
+  mutate(id_orig = as.vector(str_match(id, "[0-9]+")),
+         .after = id)
 
 # Via single stage 'mp' model
-mp_behav <- grab(mp_fit2, what = "predicted", normalise = TRUE)
-
-
-
-### Filter out large temporal gaps (using bursts)
-
-burst_windows <- dat |>
-  group_by(id, burst_id) |>
-  summarize(
-    start_time = min(date),
-    end_time = max(date),
-    .groups = "drop"
-  ) |> 
-  ungroup() |> 
-  mutate(id = as.character(id))  #needs to match class for other df
-
-# Filter fitted tracks (i.e., remove interpolated section during long gaps)
-rw_behav2 <- rw_behav |> 
-  inner_join(burst_windows,
-             by = join_by(id, between(date, start_time, end_time))) |> 
-  group_by(id, burst_id) |>
-  filter(n() >= 6) |>  #remove bursts shorter than 6 hrs
-  ungroup()
-
-mp_behav2 <- mp_behav |> 
-  inner_join(burst_windows,
-             by = join_by(id, between(date, start_time, end_time))) |> 
-  group_by(id, burst_id) |>
-  filter(n() >= 6) |>  #remove bursts shorter than 6 hrs
-  ungroup()
-
+mp_behav <- grab(mp_fit2, what = "predicted", normalise = TRUE) |> 
+  mutate(id_orig = as.vector(str_match(id, "[0-9]+")),
+         .after = id)
 
 
 
@@ -190,36 +178,38 @@ mp_behav2 <- mp_behav |>
 ggplot() +
   geom_sf(data = africa) +
   geom_path(data = rw_behav, aes(lon, lat, group = id), alpha = 0.5, linewidth = 0.25) +
-  geom_point(data = rw_behav2, aes(lon, lat, color = g), alpha = 0.5, size = 0.5) +
+  geom_point(data = rw_behav, aes(lon, lat, color = g), alpha = 0.5, size = 0.5) +
   geom_sf(data = gl_pa, color = "black", fill = NA, linewidth = 0.25) +
   scale_color_viridis_c("Move\nPersistence", option = "viridis", limits = c(0,1)) +
   theme_bw() +
-  coord_sf(xlim = range(dat$lon),
-           ylim = range(dat$lat))
+  coord_sf(xlim = range(dat2$lon),
+           ylim = range(dat2$lat))
 
 # MP model
 ggplot() +
   geom_sf(data = africa) +
   geom_path(data = mp_behav, aes(lon, lat, group = id), alpha = 0.5, linewidth = 0.25) +
-  geom_point(data = mp_behav2, aes(lon, lat, color = g), alpha = 0.5, size = 1) +
+  geom_point(data = mp_behav, aes(lon, lat, color = g), alpha = 0.5, size = 1) +
   geom_sf(data = gl_pa, color = "black", fill = NA, linewidth = 0.25) +
   scale_color_viridis_c("Move\nPersistence", option = "viridis", limits = c(0,1)) +
   theme_bw() +
-  coord_sf(xlim = range(dat$lon),
-           ylim = range(dat$lat))
+  coord_sf(xlim = range(dat2$lon),
+           ylim = range(dat2$lat))
 
 
 # Interactive mapping
-bayesmove::shiny_tracks(data = rw_behav2,
+bayesmove::shiny_tracks(data = rw_behav,
                         epsg = "+proj=utm +zone=36 +ellps=WGS84 +units=km +no_defs +south")
 
 
-#-- Not explored in detail here, but time scale has large impact on ecological inferences. Care should be taken to address research questions when selecting a time scale and behavioral state method. For example, the behavioral stat estimates at the 1 hr time step did not appear to provide informative behavioral states from this model, but DID perform better at coarser scales for coarser behavioral patterns. However, custom Bayesian versions of this SSM may produce more informative results, such as through the inclusion of covariates. --#
+#-- Not explored in detail here, but time scale has large impact on ecological inferences. Care should be taken to address research questions when selecting a time scale and behavioral state method. For example, the behavioral state estimates at the 1 hr time step did not appear to provide informative behavioral states from this model, but DID perform better for coarser behavioral patterns. However, custom Bayesian versions of this SSM may produce more informative results, such as through the inclusion of covariates. --#
+
+
 
 
 ###############################
 ### Export annotated tracks ###
 ###############################
 
-write_csv(rw_behav2, "processed_data/Session_3/rw_behav_1h.csv")
-write_csv(mp_behav2, "processed_data/Session_3/mp_behav_8h.csv")
+write_csv(rw_behav, "processed_data/Session_3/rw_behav_1h.csv")
+write_csv(mp_behav, "processed_data/Session_3/mp_behav_8h.csv")

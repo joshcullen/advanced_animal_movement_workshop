@@ -89,12 +89,11 @@ dat |>
 
 # If "large" gaps exist in the tracks, you'll likely need to segment them into bursts to avoid excessive interpolation by the model when an animal wasn't observed
 
-# Since 4 hr time step is largest of the two primary time steps across tracks, let's set a threshold to split tracks when dt > (2 * 4); due to possible noise in the exact interval, we'll add on a fraction of an hour
-
+# Let's explore if we'd have enough data per burst if analyzing separately when dt > 24 hrs
 
 
 # Define time threshold on which to split tracks into bursts
-dt_thresh <- 8.1
+dt_thresh <- 36
 
 # Define a new burst ID every time the threshold is exceeded
 dat2 <- dat |>
@@ -110,26 +109,58 @@ dat2 <- dat |>
   mutate(burst_id = paste(id, burst_id, sep = "_"))  #create unique burst IDs for model fitting
 
 
-# Remove bursts w/ very few points (e.g., n < 5, representing 6 hours)
-# dat3 <- dat2 |> 
-#   group_by(id, burst_id) |> 
-#   filter(n() >= 6) |>
-#   group_by(id) |> 
-#   mutate(burst_id = dense_rank(burst_id)) |>  #ensure all bursts are consecutive and begin at 1
-#   ungroup() |> 
-#   mutate(burst_id = paste(id, burst_id, sep = "_"))  #create unique burst IDs for model fitting
+# View burst summary 
+dat2 |>
+  group_by(burst_id) |>
+  summarize(
+    start_time = min(date),
+    end_time = max(date),
+    n = n(),
+    .groups = "drop"
+  )
+#ID 6469 has most bursts (n = 5), and 3 of these have small N (N < 30)
 
 
 
 
-# Create reference table of start and stop times per burst (for later filtering after regularization) 
-# burst_windows <- dat3 |>
-#   group_by(burst_id) |>
-#   summarize(
-#     start_time = min(date),
-#     end_time = max(date),
-#     .groups = "drop"
-#   )
+# Let's increase the threshold to 36 hrs to limit the number of short bursts and avoid tossing out data
+
+# Define time threshold on which to split tracks into bursts
+dt_thresh <- 36
+
+# Define a new burst ID every time the threshold is exceeded
+dat2 <- dat |>
+  group_by(id) |>
+  arrange(date, .by_group = TRUE) |>
+  mutate(burst_id = 1 + cumsum(coalesce(lag(dt) > dt_thresh, FALSE))) |> # Increment burst ID when dt > dt_thresh
+  ungroup() |> 
+  mutate(burst_id = paste(id, burst_id, sep = "_"))  #create unique burst IDs for model fitting
+
+
+# View burst summary 
+dat2 |>
+  group_by(burst_id) |>
+  summarize(
+    start_time = min(date),
+    end_time = max(date),
+    n = n(),
+    .groups = "drop"
+  )
+
+
+# Remove bursts w/ few points (e.g., n < 30)
+dat3 <- dat2 |>
+  group_by(id, burst_id) |>
+  filter(n() >= 30) |>
+  group_by(id) |>
+  mutate(burst_id = dense_rank(burst_id)) |>  #ensure all bursts are consecutive and begin at 1
+  ungroup() |>
+  mutate(burst_id = paste(id, burst_id, sep = "_"))  #create unique burst IDs for model fitting
+
+
+
+
+
 
 
 
@@ -150,7 +181,8 @@ dat2 <- dat |>
 
 
 # Prep data for analysis
-dat_sf <- dat2 |> 
+dat_sf <- dat3 |> 
+  rename(id_orig = id, id = burst_id) |>  #treat 'burst_id' as primary ID for model fitting
   relocate(lon, .before = lat) |>  #fix column order for aniMotum::fit_ssm()
   mutate(lc = 'G', .after = date) |>  #need to specify "location class" (G = GPS)
   st_as_sf(coords = c('lon','lat'), crs = 4326, remove = FALSE) |>  #convert to spatial object
@@ -211,7 +243,7 @@ mp_fit <- fit_ssm(dat_sf,
                   spdf = FALSE,  #turn off pre-filtering obs
                   map = list(rho_o = factor(NA)),  #turn off obs error corr
                   control = ssm_control(verbose = 1, tdist = "norm"))
-toc()  #took 4.5 min to fit
+toc()  #took 5 min to fit
 
 
 print(mp_fit)  #all indiv. models converged
@@ -223,7 +255,7 @@ plot(mp_fit, what = "predicted", type = 2, alpha = 0.1, ask = TRUE)  #plot maps 
 
 
 
-## Since we're using GPS data here and want fitted tracks to more-or-less stay close to these points, the Random Walk model is probably the way to go. But let's compare by AIC
+## Since we're using GPS data here and want fitted tracks to more-or-less stay close to these points, the Random Walk model may be the way to go. But let's compare by AIC
 
 model_selection <- rbind(summary(rw_fit)[[1]],
                          summary(crw_fit)[[1]],
@@ -266,6 +298,10 @@ plot(res_mp, type = "acf")  #autocorr plot
 ### Grab results and create data.frame
 ssm_res <- grab(mp_fit, what = "predicted")  #if what = "fitted", returns locations at observed timestamps
 
+# Add back the "original" ID (in addition to burst ID)
+ssm_res <- ssm_res |> 
+  mutate(id_orig = as.vector(str_match(id, "[0-9]+")),
+         .after = id)
 
 ### Viz fitted tracks
 africa <- ne_countries(scale = 10, continent = c("Africa"), returnclass = "sf")
@@ -273,7 +309,8 @@ africa <- ne_countries(scale = 10, continent = c("Africa"), returnclass = "sf")
 # Plot fitted tracks only
 ggplot() +
   geom_sf(data = africa) +
-  geom_path(data = ssm_res, aes(lon, lat, color = id), linewidth = 0.25) +
+  #Plot trajectories by burst ("group"), but color trajectories by animal ("color")
+  geom_path(data = ssm_res, aes(lon, lat, color = id_orig, group = id), linewidth = 0.25) +
   scale_color_brewer(palette = 'Dark2') +
   theme_bw() +
   coord_sf(xlim = range(ssm_res$lon),
@@ -281,21 +318,25 @@ ggplot() +
 
 # Compare original and fitted tracks
 ggplot() +
-  geom_path(data = dat2, aes(lon, lat), color = "black", linewidth = 0.25) +  #observed locs
+  geom_path(data = dat3 |> 
+              rename(id_orig = id, id = burst_id),
+            aes(lon, lat, group = id), color = "black", linewidth = 0.25) +  #observed locs
   geom_point(data = ssm_res, aes(lon, lat), color = "red", size = 0.1) +  #predicted locs @ regularized intervals
   theme_bw() +
-  facet_wrap(~id, scales = "free")
+  facet_wrap(~id_orig, scales = "free")
 #fitted locs show high fidelity to original tracks
 
 
 # For visualizing *many* tracks, use extension function from {ggforce}
-for (i in 1:n_distinct(ssm_res$id)) {
+for (i in 1:n_distinct(ssm_res$id_orig)) {
   print(
     ggplot() +
-      geom_path(data = dat2, aes(lon, lat, group = id), color = "black", linewidth = 0.25) +  #observed locs
+      geom_path(data = dat3 |> 
+                  rename(id_orig = id, id = burst_id),
+                aes(lon, lat, group = id), color = "black", linewidth = 0.25) +  #observed locs
       geom_point(data = ssm_res, aes(lon, lat), color = "red", size = 0.1) +  #predicted locs @ regularized intervals
       theme_bw() +
-      ggforce::facet_wrap_paginate(~id, scales = "free", nrow = 1, ncol = 1, page = i)
+      ggforce::facet_wrap_paginate(~id_orig, scales = "free", nrow = 1, ncol = 1, page = i)
   )
 }
 
@@ -326,6 +367,7 @@ mi_tracks <- sim_post(mp_fit, what = "predicted", reps = 50)
 plot(mi_tracks[1,], type = "lines", alpha = 0.05, ortho = FALSE)
 plot(mi_tracks[2,], type = "lines", alpha = 0.05)
 plot(mi_tracks[3,], type = "lines", alpha = 0.05)
+plot(mi_tracks[4,], type = "lines", alpha = 0.05)
 
 
 # Convert to data.frame
@@ -334,25 +376,25 @@ mi_tracks2 <- mi_tracks |>
   select(-c(lon, lat)) |>  #remove incorrect coords
   add_trans_coords(coords = c('x','y'),
                    proj = "+proj=utm +zone=36 +ellps=WGS84 +units=km +no_defs +south",
-                   new_proj = 4326)
+                   new_proj = 4326) |> 
+  mutate(id_orig = as.vector(str_match(id, "[0-9]+")),
+         .after = id)
 
 
 # Create custom viz
 ggplot() +
   #plot imputed tracks (rep # 1-50)
   geom_path(data = mi_tracks2 |> 
-              filter(id == 6469, rep > 0), aes(lon, lat, group = rep), color = "dodgerblue",
+              filter(id_orig == 6469, rep > 0), aes(lon, lat, group = interaction(id,rep)), color = "dodgerblue",
             alpha = 0.2, linewidth = 0.1) +
   #plot predicted track (rep = 0)
   geom_path(data = mi_tracks2 |> 
-              filter(id == 6469, rep == 0), aes(lon, lat), color = "firebrick",
+              filter(id_orig == 6469, rep == 0), aes(lon, lat, group = id), color = "firebrick",
             linewidth = 0.5) +
   theme_bw() +
   coord_equal()
 
 
-
-### Interpolated points between bursts won't be filtered out for behavioral state modelling until after we calculate the movement metrics ###
 
 
 

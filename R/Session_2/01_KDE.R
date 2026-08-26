@@ -15,7 +15,8 @@ library(units)
 #### Load data ####
 ###################
 
-dat <- read_csv('processed_data/cleaned_tracks.csv')
+dat <- read_csv('processed_data/cleaned_tracks.csv') |> 
+  mutate(id = as.character(id))  #convert to char. to fix potential handling problems
 
 glimpse(dat)
 summary(dat)
@@ -95,7 +96,7 @@ ggplot() +
 # Plot contours by themselves
 ggplot() +
   geom_sf(data = st_transform(africa, crs = 32736)) +
-  # geom_point(data = dat_track2, aes(x_, y_), alpha = 0.1, size = 0.01, color = "chartreuse") +
+  geom_point(data = dat_track2, aes(x_, y_), alpha = 0.1, size = 0.01, color = "grey20") +
   geom_sf(data = kde_href_contours, aes(color = factor(level)), fill = NA, linewidth = c(0.5, 1)) +
   scale_color_brewer("Level", palette = "Set1") +
   theme_bw() +
@@ -136,7 +137,7 @@ ggplot() +
 # Plot contours by themselves
 ggplot() +
   geom_sf(data = st_transform(africa, crs = 32736)) +
-  # geom_point(data = dat_track2, aes(x_, y_), alpha = 0.1, size = 0.01, color = "chartreuse") +
+  geom_point(data = dat_track2, aes(x_, y_), alpha = 0.1, size = 0.01, color = "grey20") +
   geom_sf(data = kde_hpi_contours, aes(color = factor(level)), fill = NA, linewidth = 0.5) +
   scale_color_brewer("Level", palette = "Set1") +
   theme_bw() +
@@ -171,7 +172,7 @@ dat_id_kde_href <- dat_track2 |>
               h = hr_kde_ref(.x),  #define reference bandwidth for KDE
               levels = c(0.5, 0.95))
       )
-toc()  #takes 0.7 sec to run
+toc()  #takes 1 sec to run
 BRRR::skrrrahh('ross1')  #let me know that it's done running!
 
 # Extract contours
@@ -212,7 +213,7 @@ ggplot() +
   scale_fill_brewer("ID", palette = "Dark2") +
   theme_bw() +
   coord_sf(xlim = range(dat$lon),
-           ylim = range(dat$lat))
+           ylim = range(dat$lat) + c(0,0.25))  #expand upper ylim only to fully viz contours
 
 
 
@@ -226,7 +227,7 @@ dat_id_kde_hpi <- dat_track2 |>
               h = hr_kde_pi(.x, rescale = 'xvar'),
               levels = c(0.5, 0.95))
   ) 
-toc()  #takes 32 sec to run
+toc()  #takes 37 sec to run
 BRRR::skrrrahh('khaled3')
 
 # Extract contours
@@ -291,7 +292,7 @@ ggplot(dat_id_kde, aes(factor(level), area, color = method)) +
   geom_point(alpha = 0.7, position = position_dodge(width = 0.55), size = 3) +
   scale_color_manual("Bandwidth method", values = viridis::cividis(n = 2, end = 0.9)) +
   theme_bw(base_size = 14)
-
+#h_ref produces much larger estimates of space use compared to h_pi
 
 
 
@@ -307,8 +308,12 @@ ggplot(dat_id_kde, aes(factor(level), area, color = method)) +
 #-- Could be used to assess UD overlap w/ spatial feature --#
 
 
-# Quantify overlap among UDs
+### Quantify overlap among UDs
+
+# For single pair
 hr_overlap(dat_id_kde_href$`5605`, dat_id_kde_href$`6471`, type = 'hr', conditional = TRUE)
+
+# For all pairs
 hr_overlap(x = dat_id_kde_href, type = 'hr', which = "all", conditional = TRUE)
 hr_overlap(x = dat_id_kde_href, type = 'vi', which = "all", conditional = TRUE)
 hr_overlap(x = dat_id_kde_href, type = 'ba', which = "all", conditional = TRUE)

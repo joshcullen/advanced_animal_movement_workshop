@@ -277,3 +277,117 @@ run_HMMs = function(data, K, Par0, dist, state.names, optMethod, niter, ncores, 
   
   return(hmm.res[[best_idx]])
 }
+
+#-----------------------------------
+
+#' Prepare state-dependent density distributions from a fitted momentuHMM or MIfitHMM model
+#' 
+#' @param model A fitted momentuHMM object, MIfitHMM list, or miSum element
+#' @param metric Character string of the data stream (e.g., "step" or "angle")
+#' @param n_points Number of points to generate for smooth density curves
+get_hmm_densities <- function(model, metric = "step", n_points = 1000) {
+  
+  # 1. Determine model type and set up the base extraction object
+  if ("miSum" %in% names(model)) {
+    # User passed the full MIfitHMM list
+    is_mi <- TRUE
+    m_core <- model$miSum
+  } else if ("MIcombine" %in% names(model)) {
+    # User passed the miSum element directly
+    is_mi <- TRUE
+    m_core <- model
+  } else {
+    # User passed a standard fitHMM object
+    is_mi <- FALSE
+    m_core <- model
+  }
+  
+  # 2. Extract shared components (names are identical in both object types)
+  nbStates    <- length(m_core$stateNames)
+  state_names <- m_core$stateNames
+  dist_name   <- m_core$conditions$dist[[metric]]
+  obs_data    <- m_core$data[[metric]]
+  
+  # 3. Extract parameter matrices and Viterbi sequences based on model type
+  if (is_mi) {
+    pars        <- m_core$Par$real[[metric]]$est
+    viterbi_seq <- m_core$Par$states
+  } else {
+    pars        <- m_core$mle[[metric]]
+    viterbi_seq <- momentuHMM::viterbi(m_core)
+  }
+  
+  # 4. Calculate state frequencies
+  state_freq <- table(factor(viterbi_seq, levels = 1:nbStates)) / length(viterbi_seq)
+  
+  # 5. Generate x-axis sequence based on observed data limits
+  obs_data <- obs_data[!is.na(obs_data)]
+  
+  if (metric == "angle") {
+    x_seq <- seq(-pi, pi, length.out = n_points)
+  } else {
+    # Pad the max step length slightly for a cleaner plot tail
+    x_seq <- seq(0, max(obs_data, na.rm = TRUE) * 1.05, length.out = n_points)
+  }
+  
+  # Initialize lists to store data frames
+  df_list <- list()
+  y_tot <- rep(0, n_points)
+  
+  # 6. Loop through states and calculate probability densities
+  for (i in 1:nbStates) {
+    
+    # --- STEP LENGTH DISTRIBUTIONS ---
+    if (dist_name == "gamma") {
+      mu <- pars[1, i]
+      sigma <- pars[2, i]
+      y <- dgamma(x_seq, shape = (mu^2 / sigma^2), scale = (sigma^2 / mu))
+      
+    } else if (dist_name == "weibull") {
+      shape <- pars[1, i]
+      scale <- pars[2, i]
+      y <- dweibull(x_seq, shape = shape, scale = scale)
+      
+      # --- TURNING ANGLE DISTRIBUTIONS ---
+    } else if (dist_name == "vm") {
+      # Handle cases where mean angle is fixed at 0 (estAngleMean = FALSE)
+      mu <- ifelse(nrow(pars) == 1, 0, pars[1, i])
+      kappa <- ifelse(nrow(pars) == 1, pars[1, i], pars[2, i])
+      y <- (1 / (2 * pi * besselI(kappa, 0))) * exp(kappa * cos(x_seq - mu))
+      
+    } else if (dist_name == "wrpcauchy") {
+      mu <- ifelse(nrow(pars) == 1, 0, pars[1, i])
+      rho <- ifelse(nrow(pars) == 1, pars[1, i], pars[2, i])
+      y <- (1 - rho^2) / (2 * pi * (1 + rho^2 - 2 * rho * cos(x_seq - mu)))
+      
+    } else {
+      stop(paste("Helper function does not currently support the", dist_name, "distribution."))
+    }
+    
+    # Scale density by the proportion of time spent in this state
+    y_scaled <- y * as.numeric(state_freq[i])
+    y_tot <- y_tot + y_scaled
+    
+    # Store in list
+    df_list[[i]] <- data.frame(
+      x = x_seq,
+      dens = y_scaled,
+      state = state_names[i]
+    )
+  }
+  
+  # 7. Append the overall "Total" density
+  df_tot <- data.frame(
+    x = x_seq,
+    dens = y_tot,
+    state = "Total"
+  )
+  
+  # Combine everything into one tidy dataframe
+  cmb <- do.call(rbind, c(df_list, list(df_tot)))
+  
+  # Lock factor levels so "Total" is always the last legend item
+  cmb$state <- factor(cmb$state, levels = c(state_names, "Total"))
+  
+  return(cmb)
+}

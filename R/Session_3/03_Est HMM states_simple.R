@@ -1,9 +1,9 @@
 
 ### Estimate behavioral states from HMM (discrete states) ###
+## Simple Version ##
 
 library(momentuHMM)
 library(tidyverse)
-# library(bayesmove)
 library(rnaturalearth)
 library(sf)
 library(tictoc)
@@ -16,7 +16,9 @@ source("R/utils.R")
 # * Options for BRW and CRW models, including activity centers that have attractive or repulsive forces
 # * Option to perform multiple imputation via wrapper function for {crawl} methods, which can provide options to analyze tracks w/ measurement error and/or irregular time series indirectly
 # * Can include random effects by ID on TPM
+# * Can include covariates on observed movement parameters
 # * Can accommodate data streams/behaviors at multiple time scales (hierarchical HMM)
+# * Can account for known states at specified obs
 
 
 
@@ -34,10 +36,6 @@ ssm_tracks <- read_csv("processed_data/Session_3/regularized_tracks.csv") |>
   arrange(id, date) |>  #make sure data is properly sorted
   mutate(id_orig = as.character(id_orig))  #IDs are better handled as 'character'
 
-# Load multiple imputations from fitted SSM
-mi_tracks <- read_csv(file = "processed_data/Session_3/mi_tracks.csv") |> 
-  mutate(id_orig = as.character(id_orig))  #IDs are better handled as 'character'
-
 
 
 ### Load spatial layers
@@ -52,49 +50,10 @@ gl_pa <- st_read("raw_data/gltfca_protectedAreasDetailed.shp")
 ### Prep data for modeling ###
 ##############################
 
-### If using irregular tracks and wanting to perform multiple imputation via {momentuHMM}/{crawl} ###
-
-## Fit CTCRW via {crawl}
-
-# format isotropic error ellipse
-# dat2 <- cbind(dat,
-#               crawl::argosDiag2Cov(Major = rep(30, nrow(dat)),  #specify GPS error in meters
-#                                    Minor = rep(30, nrow(dat)),
-#                                    Orientation = 0)
-#               )
-
-# Define how to handle error CTCRW model
-# err.model <- list(x =  ~ ln.sd.x - 1,
-#                   y =  ~ ln.sd.y - 1,
-#                   rho =  ~ error.corr)
-
-# Define prior for model param
-ln.prior <- function(theta) dnorm(theta[2],-4,2,log=TRUE)
-
-
-# Fit CTCRW
-tic()
-crw <- dat |> 
-  rename(ID = id) |>  #needs to be capitalized for crawlWrap()
-  add_trans_coords(coords = c('lon','lat'), proj = 4326, new_proj = 32736) |> 
-  crawlWrap(timeStep = "1 hour",
-            Time.name = "date",
-            coord = c("x","y"),
-            prior = ln.prior,
-            theta = c(5,3))
-toc()  #took 12 sec
-
-# Calc SL and TA from fitted model
-crw_dat <- prepData(crw)
-plot(crw_dat)
-
-
-
-### If using avg track locs from SSM regularization ###
+### Avg track locs from SSM regularization ###
 
 # Change name of 'id' column
 ssm_tracks2 <- ssm_tracks |>
-  # add_trans_coords(coords = c('lon','lat'), proj = 4326, new_proj = 32736) |>  #preferred to have coords in m or km
   rename(ID = id) |>  #prepData() requires name as 'ID'; use bursts!
   data.frame()  #CAN'T be a 'tibble'
 
@@ -102,74 +61,6 @@ ssm_tracks2 <- ssm_tracks |>
 # to fit HMM, object needs to be of this class, making 'step' and 'angle' reserved colnames
 ssm_tracks3 <- prepData(data = ssm_tracks2, type = 'UTM', coordNames = c('x','y'))  #can also be done using lat/long
 plot(ssm_tracks3)
-
-
-
-### If using multiple imputations generated w/ {aniMotum} ###
-
-# Change name of 'id' column
-mi_tracks2 <- mi_tracks |>
-  filter(rep > 0) |>  #remove avg track fit
-  mutate(ID = paste(id, rep, sep = "_")) |>  #create new ID that includes sim #
-  data.frame()  #CAN'T be a 'tibble'
-
-# Calc SL and TA (also creates as "momentuHMMData" class)
-# to fit HMM, object needs to be of this class, making 'step' and 'angle' reserved colnames
-mi_tracks3 <- prepData(data = mi_tracks2, type = 'UTM', coordNames = c('x','y'))  #can also be done using lat/long
-
-
-
-
-
-
-
-#####################################################
-### Filter out large temporal gaps (using bursts) ###
-#####################################################
-
-#-- Function moveHMM::splitAtGaps() can do this for you if only fitting HMM and wanting more concise approach --#
-
-burst_windows <- dat |>
-  group_by(id, burst_id) |>
-  summarize(
-    start_time = min(date),
-    end_time = max(date),
-    .groups = "drop"
-  ) |> 
-  ungroup() |> 
-  mutate(ID = as.character(id))  #needs to match class for other df
-
-
-
-# Filter tracks (i.e., remove interpolated section during long gaps)
-crw_dat2 <- crw_dat |> 
-  inner_join(burst_windows,
-             by = join_by(ID, between(date, start_time, end_time))) |> 
-  group_by(id, burst_id) |>
-  filter(n() >= 6) |>  #remove bursts shorter than 6 hrs
-  ungroup()
-
-# ssm_tracks4 <- ssm_tracks3 |> 
-#   inner_join(burst_windows,
-#              by = join_by(ID, between(date, start_time, end_time))) |> 
-#   group_by(id, burst_id) |>
-#   filter(n() >= 6) |>  #remove bursts shorter than 6 hrs
-#   ungroup()
-
-mi_tracks4 <- mi_tracks3 |> 
-  mutate(ID_sim = ID,
-         ID = str_match(ID_sim, "[0-9]*")) |>  #need orig ID to join w/ 'burst_windows'
-  inner_join(burst_windows,
-             by = join_by(ID, between(date, start_time, end_time))) |> 
-  group_by(id, burst_id) |>
-  filter(n() >= 6) |>  #remove bursts shorter than 6 hrs
-  ungroup()
-
-
-# Example if using moveHMM::splitAtGaps
-# tmp <- dat |> 
-#   rename(ID = id, time = date) |>  #need to follow naming convention
-#   moveHMM::splitAtGaps(maxGap = 8, shortestTrack = 6, units = "hours")
 
 
 
@@ -390,8 +281,8 @@ stepPar0 <- c(0.2, 0.85, 2.25, 0.15, 0.25, 0.75) # (mu_1, mu_2, mu_3, sd_1, sd_2
 anglePar0 <- c(0.5, 0.75, 0.9) # (conc_1, conc_2, conc_3); assuming mean fixed at 0
 
 # Convert back to "momentuHMMData" class to fit model
-# class(ssm_tracks5) <- append("momentuHMMData", class(ssm_tracks5))
-# ssm_tracks5$ID <- as.factor(ssm_tracks5$ID)  #needs to be factor for TMB optimization
+# class(ssm_tracks4) <- append("momentuHMMData", class(ssm_tracks4))
+# ssm_tracks4$ID <- as.factor(ssm_tracks4$ID)  #needs to be factor for TMB optimization
 
 
 
@@ -594,6 +485,10 @@ plot(fit_hmm_4states)
 # Explore time series of state probabilities
 plotStates(fit_hmm_3states)
 
+# Get estimates of activity budget
+timeInStates(fit_hmm_3states)
+#Encamped: 31%; Exploratory: 51%; Transit: 18%
+
 # Annotate tracks w/ model results
 ssm_tracks5 <- ssm_tracks4 |> 
   mutate(state_vit = viterbi(fit_hmm_3states),  #use Viterbi algorithm (most likely sequence)
@@ -699,6 +594,52 @@ ggplot() +
 # Interactively explore results
 ssm_tracks5 |> 
   bayesmove::shiny_tracks(epsg = "+proj=utm +zone=36 +ellps=WGS84 +units=km +no_defs +south")
+
+
+
+
+
+###########################################################
+### Create custom state-dependent density distrib plots ###
+###########################################################
+
+### Step lengths
+
+# Generate the plotting data for step lengths
+df_steps <- get_hmm_densities(fit_hmm_3states, metric = "step")
+
+# Define colors (add enough for K states + Black for total)
+pal <- c("#E69F00", "#56B4E9", "#009E73", "#000000")
+
+ggplot() +
+  geom_line(data = df_steps, aes(x = x, y = dens, color = state, linetype = state), linewidth = 1) +
+  scale_colour_manual(values = pal) +
+  # Assign "solid" to all states, and "dashed" to the final "Total" line
+  scale_linetype_manual(values = c(rep("solid", 3), "dashed")) +
+  theme_bw(base_size = 14) +
+  theme(legend.title = element_blank()) +
+  labs(x = "Step Length (m)", y = "Density")
+
+
+### Turning angles
+
+# Generate the plotting data for turning angles
+df_angle <- get_hmm_densities(fit_hmm_3states, metric = "angle")
+
+ggplot() +
+  geom_line(data = df_angle, aes(x = x, y = dens, color = state, linetype = state), linewidth = 1) +  
+  scale_colour_manual(values = pal) +
+  # Assign "solid" to all states, and "dashed" to the final "Total" line
+  scale_linetype_manual(values = c(rep("solid", 3), "dashed")) +
+  scale_x_continuous(
+    limits = c(-pi, pi),
+    breaks = seq(-pi, pi, by = pi/2),
+    labels = expression(-pi, -frac(pi, 2), 0, frac(pi, 2), pi)
+  ) +
+  theme_bw(base_size = 14) +
+  theme(legend.title = element_blank()) +
+  labs(x = "Turning Angle (rad)", y = "Density")
+
 
 
 

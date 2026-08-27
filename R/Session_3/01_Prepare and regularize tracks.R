@@ -93,7 +93,7 @@ dat |>
 
 
 # Define time threshold on which to split tracks into bursts
-dt_thresh <- 36
+dt_thresh <- 24
 
 # Define a new burst ID every time the threshold is exceeded
 dat2 <- dat |>

@@ -22,10 +22,6 @@ source("R/utils.R")
 # Load tracks w/ bursts
 dat <- read_csv("processed_data/Session_3/track_bursts.csv")
 
-# Load multiple imputations from fitted SSM
-# mi_tracks <- read_csv(file = "processed_data/Session_3/mi_tracks.csv") |> 
-#   mutate(id_orig = as.character(id_orig))  #IDs are better handled as 'character'
-
 
 
 ### Load spatial layers

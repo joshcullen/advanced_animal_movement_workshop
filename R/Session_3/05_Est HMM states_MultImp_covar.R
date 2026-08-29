@@ -102,15 +102,50 @@ cov_interp <- crw$crwPredict |>
     # Extract hour
     hour = hour(date)
   ) |>
-  ungroup() |> 
+  ungroup() 
+
+# Visually explore that these interpolations make sense
+ggplot() +
+  geom_point(data = cov_interp |> 
+               group_by(ID) |> 
+               slice_head(n = 500) |> 
+               ungroup() |> 
+               filter(locType == 'p'), aes(date, temperature), color = "red") +  #predicted
+  geom_point(data = cov_interp |> 
+               group_by(ID) |> 
+               slice_head(n = 500) |> 
+               ungroup() |> 
+               filter(locType == 'o'), aes(date, temperature), color = "black", alpha = 0.6) +  #observed
+  theme_bw() +
+  facet_wrap(~ID, scales = "free_x", ncol = 1)
+#looks like it does a good job
+
+ggplot() +
+  geom_point(data = cov_interp |> 
+               group_by(ID) |> 
+               slice_head(n = 500) |> 
+               ungroup() |> 
+               filter(locType == 'p'), aes(date, hour), color = "red") +  #predicted
+  geom_point(data = cov_interp |> 
+               group_by(ID) |> 
+               slice_head(n = 500) |> 
+               ungroup() |> 
+               filter(locType == 'o'), aes(date, hour), color = "black", alpha = 0.6) +  #observed
+  theme_bw() +
+  facet_wrap(~ID, scales = "free_x", ncol = 1)
+#looks like it does a good job
+
+
+# Subset and convert to df
+cov_interp2 <- cov_interp|> 
   data.frame() |>  #can't be a tibble
   select(ID, date, temperature, hour)  #only keep necessary cols
 
 # Merge the interpolated covariates into the 'crw' object
-crw_merged <- crawlMerge(crw, cov_interp, Time.name = "date")
+crw_merged <- crawlMerge(crw, cov_interp2, Time.name = "date")
 
-# foo <- crw$crwPredict |> data.frame() |> filter(ID == 5605) |> select(TimeNum, date, temp)
-# z <- approx(x = foo$date, y = foo$temp, xout = foo$date, rule = 2)$y
+
+
 
 
 ##########################################
@@ -247,8 +282,12 @@ fit_hmm_2states <- MIfitHMM(miData = crw_merged,
                             nSims = 10,  #10 imputations
                             nbStates = 2,
                             ncores = 10,
-                            dist = list(step = "gamma", angle = "wrpcauchy"),  #can use other distribs as well
-                            Par0 = list(step = stepPar0, angle = anglePar0),
+                            dist = list(step = "gamma", angle = "wrpcauchy"),
+                            
+                            #Using initial vals here from simpler model for step, angle, and betas
+                            Par0 = list(step = Par0_2states$Par$step, angle = Par0_2states$Par$angle),
+                            beta0 = Par0_2states$beta,
+                            
                             formula = ~ temperature * cosinor(hour, period = 24),
                             covNames = c("temperature", "hour"),  # THIS PREVENTS STRIPPING FROM OBJECT
                             stationary = FALSE,  #needs to be FALSE when using covars
@@ -258,7 +297,7 @@ fit_hmm_2states <- MIfitHMM(miData = crw_merged,
 )
 toc()  #took 2.5 min to run for 10 sims
 
-fit_hmm_2states
+fit_hmm_2states  #most imputations didn't converge
 plot(fit_hmm_2states, plotCI = TRUE)
 plot(fit_hmm_2states, plotCI = TRUE, plotTracks = FALSE,
      covs = data.frame(hour = 16, temperature = 45))  #manually set fixed values
@@ -368,7 +407,11 @@ fit_hmm_3states <- MIfitHMM(miData = crw_merged,
                             ncores = 10,
                             na.rm = TRUE,  #remove imputations w/ NA params or SEs from pooling
                             dist = list(step = "gamma", angle = "wrpcauchy"),  #can use other distribs as well
-                            Par0 = list(step = stepPar0, angle = anglePar0),
+                            
+                            #Using initial vals here from simpler model for step, angle, and betas
+                            Par0 = list(step = Par0_3states$Par$step, angle = Par0_3states$Par$angle),
+                            beta0 = Par0_3states$beta,
+                            
                             formula = ~ temperature * cosinor(hour, period = 24),
                             covNames = c("temperature", "hour"),  # THIS PREVENTS STRIPPING FROM OBJECT
                             stationary = FALSE,  #needs to be FALSE when using covars
@@ -378,7 +421,7 @@ fit_hmm_3states <- MIfitHMM(miData = crw_merged,
 )
 toc()  #took 2 min to run for 10 sims
 
-fit_hmm_3states
+fit_hmm_3states  #most imputations didn't converge and/or have missing uncertainty est.
 plot(fit_hmm_3states, plotCI = TRUE)
 plot(fit_hmm_3states, plotCI = TRUE, plotTracks = FALSE,
      covs = data.frame(hour = 16, temperature = 45))  #manually set fixed values
@@ -490,7 +533,11 @@ fit_hmm_4states <- MIfitHMM(miData = crw_merged,
                             ncores = 10,
                             na.rm = TRUE,  #remove imputations w/ NA params or SEs from pooling
                             dist = list(step = "gamma", angle = "wrpcauchy"),  #can use other distribs as well
-                            Par0 = list(step = stepPar0, angle = anglePar0),
+                            
+                            #Using initial vals here from simpler model for step, angle, and betas
+                            # Par0 = list(step = Par0_4states$Par$step, angle = Par0_4states$Par$angle),
+                            # beta0 = Par0_4states$beta,
+                            
                             formula = ~ temperature * cosinor(hour, period = 24),
                             covNames = c("temperature", "hour"),  # THIS PREVENTS STRIPPING FROM OBJECT
                             stationary = FALSE,  #needs to be FALSE when using covars
@@ -500,7 +547,7 @@ fit_hmm_4states <- MIfitHMM(miData = crw_merged,
 )
 toc()  #took 2 min to run for 10 sims
 
-fit_hmm_4states
+fit_hmm_4states  #no models converged
 plot(fit_hmm_4states, plotCI = TRUE)
 plot(fit_hmm_4states, plotCI = TRUE, plotTracks = FALSE,
      covs = data.frame(hour = 16, temperature = 45))  #manually set fixed values

@@ -383,7 +383,7 @@ mi_tracks2 <- mi_tracks |>
 
 # Create custom viz
 ggplot() +
-  #plot imputed tracks (rep # 1-50)
+  #plot imputed tracks (rep #s 1-50)
   geom_path(data = mi_tracks2 |> 
               filter(id_orig == 6469, rep > 0), aes(lon, lat, group = interaction(id,rep)), color = "dodgerblue",
             alpha = 0.2, linewidth = 0.1) +

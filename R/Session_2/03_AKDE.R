@@ -651,7 +651,7 @@ ggplot() +
 ### Perform workflow in Shiny app ###
 #####################################
 
-#remotes::install_github("ctmm-initiative/ctmmweb")
+#pak::pak("ctmm-initiative/ctmmweb")
 ctmmweb::app(dat.telem2)
 
 

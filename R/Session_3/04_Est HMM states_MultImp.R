@@ -603,14 +603,14 @@ crw_dat3 |>
 df_steps <- get_hmm_densities(fit_hmm_3states, metric = "step")
 
 # Define colors (add enough for K states + Black for total)
-my_colors <- c("#E69F00", "#56B4E9", "#009E73", "#000000")
+pal <- c("#E69F00", "#56B4E9", "#009E73", "#000000")
 
 ggplot() +
   # Add empirical histogram
   geom_histogram(data = crw_dat, aes(x = step, y = after_stat(density)), fill = "grey85",
                  color = "grey65", linewidth = 0.25) +
   geom_line(data = df_steps, aes(x = x, y = dens, color = state, linetype = state), linewidth = 1) +
-  scale_colour_manual(values = my_colors) +
+  scale_colour_manual(values = pal) +
   # Assign "solid" to all states, and "dashed" to the final "Total" line
   scale_linetype_manual(values = c(rep("solid", 3), "dashed")) +
   theme_bw(base_size = 14) +
@@ -625,10 +625,10 @@ df_angle <- get_hmm_densities(fit_hmm_3states, metric = "angle")
 
 ggplot() +
   # Add empirical histogram
-  geom_histogram(data = crw_dat, aes(x = step, y = after_stat(density)), fill = "grey85",
+  geom_histogram(data = crw_dat, aes(x = angle, y = after_stat(density)), fill = "grey85",
                  color = "grey65", linewidth = 0.25) +
   geom_line(data = df_angle, aes(x = x, y = dens, color = state, linetype = state), linewidth = 1) +  
-  scale_colour_manual(values = my_colors) +
+  scale_colour_manual(values = pal) +
   # Assign "solid" to all states, and "dashed" to the final "Total" line
   scale_linetype_manual(values = c(rep("solid", 3), "dashed")) +
   scale_x_continuous(

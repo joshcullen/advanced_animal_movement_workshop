@@ -27,10 +27,6 @@ ssm_tracks <- read_csv("processed_data/Session_3/regularized_tracks.csv") |>
 # Load fitted SSM objects
 load(file = "processed_data/Session_3/ssm_fits.RData")
 
-# Load multiple imputations from fitted SSM
-mi_tracks <- read_csv(file = "processed_data/Session_3/mi_tracks.csv") |> 
-  mutate(id_orig = as.character(id_orig))  #IDs are better handled as 'character'
-
 
 
 ### Load spatial layers

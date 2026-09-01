@@ -2,6 +2,7 @@
 ### Estimate behavioral states from HMM (discrete states) ###
 ## Simple Version ##
 
+# remotes::install_github("bmcclintock/momentuHMM@develop")
 library(momentuHMM)
 library(tidyverse)
 library(rnaturalearth)
@@ -170,10 +171,6 @@ ssm_tracks4$ID <- as.factor(ssm_tracks4$ID)  #needs to be factor for TMB optimiz
 set.seed(2026)
 #if states get flipped, try adjusting initial params or random seed number (e.g., seed 2026 gave problems w/ flipped states when using retryFits)
 #alternatively, you can specify pseudo-design matrix to prevent state label switching (but doesn't work for TMB)
-# K <- 2
-# angleDM <- diag(K)  #pseudo-design matrix: KxK identity matrix keeping all states independent for angle conc.
-# rownames(angleDM) <- paste0("concentration_", 1:K)
-# colnames(angleDM) <- paste0("concentration_", 1:K, ":(Intercept)")
 
 tic()
 test_2states <- fitHMM(data = ssm_tracks4,

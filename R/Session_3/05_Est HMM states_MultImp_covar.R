@@ -535,8 +535,8 @@ fit_hmm_4states <- MIfitHMM(miData = crw_merged,
                             dist = list(step = "gamma", angle = "wrpcauchy"),  #can use other distribs as well
                             
                             #Using initial vals here from simpler model for step, angle, and betas
-                            # Par0 = list(step = Par0_4states$Par$step, angle = Par0_4states$Par$angle),
-                            # beta0 = Par0_4states$beta,
+                            Par0 = list(step = Par0_4states$Par$step, angle = Par0_4states$Par$angle),
+                            beta0 = Par0_4states$beta,
                             
                             formula = ~ temperature * cosinor(hour, period = 24),
                             covNames = c("temperature", "hour"),  # THIS PREVENTS STRIPPING FROM OBJECT
@@ -548,15 +548,15 @@ fit_hmm_4states <- MIfitHMM(miData = crw_merged,
 toc()  #took 2 min to run for 10 sims
 
 fit_hmm_4states  #no models converged
-plot(fit_hmm_4states, plotCI = TRUE)
-plot(fit_hmm_4states, plotCI = TRUE, plotTracks = FALSE,
-     covs = data.frame(hour = 16, temperature = 45))  #manually set fixed values
+# plot(fit_hmm_4states, plotCI = TRUE)
+# plot(fit_hmm_4states, plotCI = TRUE, plotTracks = FALSE,
+#      covs = data.frame(hour = 16, temperature = 45))  #manually set fixed values
 
-plotStationary(fit_hmm_4states, plotCI = TRUE)
-plotStationary(fit_hmm_4states, plotCI = TRUE,
-               covs = data.frame(hour = 16, temperature = 45))  #manually set fixed values
+# plotStationary(fit_hmm_4states, plotCI = TRUE)
+# plotStationary(fit_hmm_4states, plotCI = TRUE,
+#                covs = data.frame(hour = 16, temperature = 45))  #manually set fixed values
 
-plotPR(fit_hmm_4states, ncores = 5)  #looks fine
+# plotPR(fit_hmm_4states, ncores = 5)  #looks fine
 
 
 
@@ -576,7 +576,8 @@ plotPR(fit_hmm_4states, ncores = 5)  #looks fine
 # Compare state-dependent density distributions and annotated tracks
 plot(fit_hmm_2states)
 plot(fit_hmm_3states)
-plot(fit_hmm_4states)
+# plot(fit_hmm_4states)
+
 #2-state model probably over-simplifies, 4-state model probs overfits and this model had the most convergence issues
 #so we'll select the 3-state model here as the best-fitting of the three
 
@@ -595,7 +596,7 @@ plotStates(fit_hmm_3states)
 
 # Get estimates of activity budget
 timeInStates(fit_hmm_3states)
-#Encamped: 55%; Exploratory: 36%; Transit: 9%
+#Encamped: 53%; Exploratory: 38%; Transit: 9%
 
 # Annotate tracks w/ model results
 crw_dat3 <- crw_dat2 |> 
@@ -613,10 +614,10 @@ crw_dat3 <- crw_dat2 |>
 
 # Any discrepencies between the 2 methods for assigning states?
 all.equal(crw_dat3$state_vit, crw_dat3$state_fb)
-#looks like there are some differences (2064 to be exact)
+#looks like there are some differences (1932 to be exact)
 
 # Any 'Unclassified' obs?
-table(crw_dat3$state_fb)  #33 obs
+table(crw_dat3$state_fb)  #41 obs
 
 
 #-- In general, I like to use the approach of assigning states based on the confidence in the state estimates. But plenty of people use and publish the Viterbi seq. of states too --#
@@ -785,7 +786,7 @@ stat_probs2 <- stat_probs |>
 
 ggplot(stat_probs2, aes(x = x, y = est, color = state, fill = state)) +
   geom_ribbon(aes(ymin = lci, ymax = uci), alpha = 0.2, color = NA) +
-  geom_line(size = 1) +
+  geom_line(linewidth = 1) +
   scale_color_manual("", values = pal[-4]) +
   scale_fill_manual("", values = pal[-4]) +
   scale_y_continuous(limits = c(0, 1)) +

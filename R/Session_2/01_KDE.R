@@ -155,7 +155,7 @@ ggplot() +
 
 # If interested in installing a package that produces sounds when your code is finished running, this is my favorite (BRRR)
 # https://github.com/brooke-watson/BRRR
-# devtools::install_github("brooke-watson/BRRR")
+# pak::pak("brooke-watson/BRRR")
 
 
 ## Href

@@ -150,7 +150,7 @@ gl_bbox <- st_bbox(c(xmin = min(dat$lon), ymin = min(dat$lat), xmax = max(dat$lo
 
 # Query water features w/in ROI
 gl_water <- opq(bbox = gl_bbox) |>
-  add_osm_feature(key = "water") |>
+  add_osm_feature(key = "water", key_exact = FALSE) |>
   osmdata_sf()
 
 # Separate by class type
@@ -208,9 +208,9 @@ plot(hfp_gl)
 # Viz tracks and HFP
 ggplot() +
   geom_spatraster(data = hfp_gl) +
-  scale_fill_viridis_c("HFP") +
+  scale_fill_viridis_c("HFP", na.value = "transparent") +
   geom_path(data = dat, aes(lon, lat, group = id, color = factor(id))) +
-  scale_color_brewer("ID", palette = "Set1") +
+  scale_color_brewer("ID", palette = "Set2") +
   theme_bw()
 
 
@@ -330,7 +330,7 @@ pop_polys <- merge(pop_polys, patch_stats, by = "patches") |>
 
 ggplot() +
   geom_sf(data = za_mz) +
-  geom_sf(data = pop_polys, aes(fill = `ghs-pop-2020-cog`), color = NA) +
+  geom_sf(data = pop_polys, aes(fill = `ghs-pop-2020-cog`), color = "black", linewidth = 0.05) +
   scale_fill_viridis_c("Human Pop. Density") +
   geom_path(data = dat, aes(lon, lat, group = id, color = factor(id)), linewidth = 0.15, alpha = 0.5) +
   scale_color_brewer("ID", palette = "Set1") +
@@ -545,6 +545,7 @@ mid_dates <- unique_starts + (unique_ends - unique_starts) / 2
 # Apply the calculated midpoints to your raster layer names
 names(ndvi3) <- paste0("NDVI_", format(mid_dates, "%Y_%m_%d"))
 time(ndvi3) <- mid_dates
+
 
 ### Explore time-varying NDVI layers ###
 ndvi3

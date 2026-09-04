@@ -514,7 +514,7 @@ cropped_paths <- map(seq_along(ndvi_vrt), function(i) {
   
   return(out_file)
 })
-toc()  #took 2.5 min
+toc()  #took 2.5 min; may take a while longer depending on WiFI bandwidth and server
 
 
 # Create single time series stack
@@ -538,8 +538,8 @@ toc()  # took 20 sec
 
 
 # Calculate the temporal midpoint
-unique_starts <- unique(start_dates)
-unique_ends <- unique(end_dates)
+unique_starts <- as_date(names(ndvi_vrt))  #ordered chronologically
+unique_ends <- sort(unique(end_dates))  #reverse chronological order
 mid_dates <- unique_starts + (unique_ends - unique_starts) / 2
 
 # Apply the calculated midpoints to your raster layer names
@@ -560,8 +560,9 @@ ggplot() +
 
 # Compare difference between first and last layer of time series (2025-07-04 vs 2022-03-14)
 ggplot() +
-  geom_spatraster(data = ndvi3[[1]] - ndvi3[[nlyr(ndvi3)]]) +
+  geom_spatraster(data = ndvi3[[nlyr(ndvi3)]] - ndvi3[[1]]) +
   scale_fill_gradient2("Diff in NDVI", na.value = "transparent") +
+  labs(title = "2025/07/04 NDVI - 2022/03/14 NDVI") +
   theme_bw()
 
 # Calculate mean of all layers
@@ -579,7 +580,8 @@ ndvi3 |>
   ggplot() +
   geom_line(aes(date, mean)) +
   geom_point(aes(date, mean)) +
-  theme_bw()
+  labs(x = "Time", y = "Mean NDVI") +
+  theme_bw(base_size = 14)
 
 
 ### Calculate monthly mean value (based on midpoint date)
@@ -629,5 +631,4 @@ st_write(pop_polys, "rasters/pop_polygons.fgb", overwrite = TRUE)
 writeRaster(worldcover, "rasters/lulc.tif", overwrite = TRUE)  #350 MB
 
 # NDVI
-ndvi_sorted <- sort(ndvi3)  #first sort raster in chronological order
-writeCDF(ndvi_sorted, "rasters/ndvi.nc", varname = "NDVI", timename = "time", overwrite = TRUE)  #2.6 GB
+writeCDF(ndvi3, "rasters/ndvi.nc", varname = "NDVI", timename = "time", overwrite = TRUE)  #2.6 GB

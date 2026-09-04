@@ -337,7 +337,7 @@ shrub_bin <- ifel(!is.na(shrub_lc), 1, 0)
 
 # Stack layers
 lc_stack <- c(tree_bin, shrub_bin) |> 
-  project(crs(dat_sf2), threads = 10, use_gdal = TRUE)  #reproject to match tracks
+  project(crs(dat_sf2), res = 10, method = "near", threads = 10, use_gdal = TRUE)  #reproject to match tracks
 names(lc_stack) <- c('tree','shrub')
 plot(lc_stack)
 lc_stack
@@ -354,11 +354,31 @@ dat_sf2 <- cbind(dat_sf2, props)
 
 
 
+### Calculate spatial layers of 'tree' and 'shrub' proportions using ~50 m buffer distance
+
+# Calc focal props (each cell is 10 m, so we need 11 cells to cover full diameter to equate 50 m buffer)
+
+tic()
+tree_prop <- focal(lc_stack[["tree"]], w = 11, fun = "mean", na.rm = TRUE, cores = 10)
+toc()  #took 20 sec
+
+tic()
+shrub_prop <- focal(lc_stack[["shrub"]], w = 11, fun = "mean", na.rm = TRUE, cores = 10)
+toc()  #took 20 sec
 
 
-#############################
-### Export extracted data ###
-#############################
+
+
+##############
+### Export ###
+##############
+
+# Save new hybrid water vector layer (OSM + LULC)
+st_write(water_sub, "rasters/water.fgb")
+
+# Save layers for proportion of 'tree' and 'shrub' cover w/in 50 m buffer
+writeRaster(tree_prop, "rasters/tree_prop_50m.tif", overwrite = TRUE)  #1.7 GB
+writeRaster(shrub_prop, "rasters/shrub_prop_50m.tif", overwrite = TRUE)  #1.7 GB
 
 # Convert from sf object to data.frame (including UTM coords; x,y)
 dat_out <- dat_sf2 |> 

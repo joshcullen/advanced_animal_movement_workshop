@@ -6,6 +6,7 @@ website:
   title: "Advanced Animal Movement Modelling Workshop"
   site-url: "https://joshcullen.github.io/website/"
   repo-url: "https://github.com/joshcullen/advanced_animal_movement_workshop"
+  repo-subdir: website
   # google-analytics:
     # tracking-id: "G-R5TYR42Z4J"
     # anonymize-ip: true

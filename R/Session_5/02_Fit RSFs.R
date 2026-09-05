@@ -83,14 +83,14 @@ selection_ratios
 ### Predict marginal effects
 covars <- c("dist2pop_s", "dist2water_s", "ndvi_s")
 
-rsf_preds <- predict_rsf_margeff(fit = rsf_linear, focal_covars = covars, data  = dat2)
+rsf_preds <- predict_rsf_margeff(fit = rsf_linear, focal_covars = covars, intercept = TRUE, data  = dat2)
 
 # Plot all marginal effects
 ggplot(rsf_preds, aes(x = x_natural, y = rss)) +
   geom_line(color = "#2c7fb8", linewidth = 1) +
   geom_ribbon(aes(ymin = rss_lwr, ymax = rss_upr), fill = "#2c7fb8", alpha = 0.2) +
   geom_hline(yintercept = 1, linetype = "dashed", color = "darkred") +
-  facet_wrap(~ covariate, scales = "free_x", strip.position = "bottom", ncol = 1) +
+  facet_wrap(~ covariate, scales = "free_x", strip.position = "bottom") +
   labs(
     title = "Marginal Effects of RSF Covariates",
     subtitle = "Relative Selection Strength (RSS) with other covariates held at their mean",
@@ -111,6 +111,7 @@ ggplot(rsf_preds, aes(x = x_natural, y = rss)) +
 #we'll use a set of 5 knots (k) for defining the relative complexity of our smoothed curves
 #we'll also use cubic regression splines instead of the default thin plate splines
 
+tic()
 rsf_gam <- gam(obs ~ s(dist2pop_s, k = 5, bs = "cr") + s(dist2water_s, k = 5, bs = "cr") + 
     s(ndvi_s, k = 5, bs = "cr"),
   data = dat2,
@@ -118,6 +119,7 @@ rsf_gam <- gam(obs ~ s(dist2pop_s, k = 5, bs = "cr") + s(dist2water_s, k = 5, bs
   weights = wts,
   method = "REML"
 )
+toc()  #took 14 sec
 
 summary(rsf_gam)
 #estimated degrees of freedom (edf) are all ~4, so we have nonlinear relationships
@@ -191,8 +193,8 @@ names(cov_stack) <- c("dist2water_s", "dist2pop_s", "ndvi_s")
 
 
 # Predict relative intensity (i.e., relative abundance)
-rsf_map_linear <- predict(cov_stack2, rsf_linear, type = "response")
-rsf_map_gam <- predict(cov_stack2, rsf_gam, type = "response")
+rsf_map_linear <- predict(cov_stack, rsf_linear, type = "response")
+rsf_map_gam <- predict(cov_stack, rsf_gam, type = "response")
 
 
 # Map predictions compared to tracks

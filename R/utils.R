@@ -397,12 +397,17 @@ get_hmm_densities <- function(model, metric = "step", n_points = 1000) {
 #--------------------------
 
 
-predict_rsf_margeff <- function(fit, focal_covars, data, length.out = 100) {
+predict_rsf_margeff <- function(fit, focal_covars, data, intercept, length.out = 100) {
   # Get all predictor variables used in the model (excluding the response)
   model_vars <- attr(terms(fit), "term.labels")
   
   # Extract the arbitrary intercept (tied to background sample weight/size)
-  intercept <- coef(fit)["(Intercept)"]
+  if (intercept) {  #check whether Intercept estimated in model
+    intercept <- coef(fit)["(Intercept)"]
+  } else {
+    intercept <- 0
+  }
+  
   
   # Iterate over each focal covariate to generate predictions
   pred_df <- map(focal_covars, function(focal_var) {

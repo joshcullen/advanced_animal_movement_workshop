@@ -391,3 +391,112 @@ get_hmm_densities <- function(model, metric = "step", n_points = 1000) {
   
   return(cmb)
 }
+
+
+
+#--------------------------
+
+
+predict_rsf_margeff <- function(fit, focal_covars, data, length.out = 100) {
+  # Get all predictor variables used in the model (excluding the response)
+  model_vars <- attr(terms(fit), "term.labels")
+  
+  # Extract the arbitrary intercept (tied to background sample weight/size)
+  intercept <- coef(fit)["(Intercept)"]
+  
+  # Iterate over each focal covariate to generate predictions
+  pred_df <- map(focal_covars, function(focal_var) {
+    
+    # 1. Identify the raw variable name (assuming the scaled variables end in "_s")
+    raw_var <- sub("_s$", "", focal_var)
+    
+    if (!raw_var %in% names(data)) {
+      stop(sprintf("Cannot find raw variable '%s' in data.", raw_var))
+    }
+    
+    # 2. Calculate summary statistics from the raw data for back-transformation
+    var_mean <- mean(data[[raw_var]], na.rm = TRUE)
+    var_sd   <- sd(data[[raw_var]], na.rm = TRUE)
+    
+    # 3. Create new_data for prediction
+    # Initialize all model variables at 0 (their scaled mean)
+    new_data <- as.data.frame(matrix(0, nrow = length.out, ncol = length(model_vars)))
+    names(new_data) <- model_vars
+    
+    # Vary only the focal variable from its scaled minimum to maximum
+    focal_min <- min(data[[focal_var]], na.rm = TRUE)
+    focal_max <- max(data[[focal_var]], na.rm = TRUE)
+    new_data[[focal_var]] <- seq(focal_min, focal_max, length.out = length.out)
+    
+    # 4. Generate predictions on the link (log) scale
+    preds <- predict(fit, newdata = new_data, type = "link", se.fit = TRUE)
+    
+    # 5. Process results into a tidy format
+    res <- data.frame(
+      covariate = raw_var,
+      x_scaled  = new_data[[focal_var]],
+      log_rss   = preds$fit - intercept
+    ) |> 
+      mutate(
+        log_rss_lwr = log_rss - (1.96 * preds$se.fit),
+        log_rss_upr = log_rss + (1.96 * preds$se.fit),
+        rss         = exp(log_rss),
+        rss_lwr     = exp(log_rss_lwr),
+        rss_upr     = exp(log_rss_upr),
+        x_natural   = (x_scaled * var_sd) + var_mean
+      )
+    
+    return(res)
+  }) |> 
+    list_rbind() # Combine the list of dataframes into a single tidy dataframe
+  
+  return(pred_df)
+}
+
+
+#----------------------------
+
+
+predict_gam_margeff <- function(fit, data) {
+  
+  # 1. Extract smooth estimates on the link scale
+  # This returns .estimate (log-RSS) and .se for each smooth term
+  sm <- gratia::smooth_estimates(fit)
+  
+  # 2. Parse covariate names from the smooth term
+  # e.g., "s(dist2pop_s)" becomes "dist2pop_s", and the raw becomes "dist2pop"
+  sm <- sm |>
+    mutate(
+      covar_scaled = sub("^s\\(([^)]+)\\).*", "\\1", .smooth),
+      covar_raw    = sub("_s$", "", covar_scaled)
+    )
+  
+  # 3. Process estimates and exponentiate to get RSS
+  sm_processed <- sm |>
+    mutate(
+      # gratia creates a column for each covariate; extract the relevant x_scaled value dynamically
+      x_scaled = purrr::map2_dbl(covar_scaled, row_number(), ~ sm[[.x]][.y]),
+      
+      # Calculate confidence intervals on link scale
+      log_rss_lwr = .estimate - (1.96 * .se),
+      log_rss_upr = .estimate + (1.96 * .se),
+      
+      # Exponentiate to relative selection strength
+      rss     = exp(.estimate),
+      rss_lwr = exp(log_rss_lwr),
+      rss_upr = exp(log_rss_upr)
+    )
+  
+  # 4. Back-transform the x-axis to natural scale
+  final_df <- sm_processed |>
+    group_by(covar_raw) |>
+    mutate(
+      var_mean  = mean(data[[covar_raw[1]]], na.rm = TRUE),
+      var_sd    = sd(data[[covar_raw[1]]], na.rm = TRUE),
+      x_natural = (x_scaled * var_sd) + var_mean
+    ) |>
+    ungroup() |>
+    select(covariate = covar_raw, x_scaled, x_natural, rss, rss_lwr, rss_upr)
+  
+  return(final_df)
+}

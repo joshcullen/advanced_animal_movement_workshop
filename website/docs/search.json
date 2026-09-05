@@ -1,0 +1,35 @@
+[
+  {
+    "objectID": "index.html",
+    "href": "index.html",
+    "title": "Modelling for movement and spatial ecology with animal telemetry data",
+    "section": "",
+    "text": "A workshop developed by Josh Cullen in collaboration with Stellenbosch University, Wildlife Free to Roam, and NiTHeCS (National Institute for Theoretical and Computational Sciences).\n\n📆  16–17 September 2026\n⏰  8:30 - 16:30\n🏫  Stellenbosch University, Merensky Bldg, NITheCS Seminar Room\n\n\n\n\n\n\n\n\nNoteNote\n\n\n\nAlthough this workshop is being conducted at Stellenbosch University (Stellenbosch, South Africa), these sessions will be recorded and made freely available online after the completion of the workshop. Stay tuned for when these are posted on YouTube.",
+    "crumbs": [
+      "Workshop information",
+      "Overview"
+    ]
+  },
+  {
+    "objectID": "index.html#workshop-goals",
+    "href": "index.html#workshop-goals",
+    "title": "Modelling for movement and spatial ecology with animal telemetry data",
+    "section": "Workshop goals",
+    "text": "Workshop goals\n\nBuild regional capacity in modern animal movement modelling\nBridge ecological theory with quantitative and statistical modelling approaches\nIntroduce contemporary frameworks for analysing movement, behaviour, habitat selection and space use\nDevelop practical skills in reproducible R-based telemetry workflows\nExtract environmental data from static and/or time-matched dynamic layers\nExplore emerging approaches in Bayesian modelling and machine learning for movement ecology\nConnect movement analyses to conservation planning and management applications\nFoster collaboration among students, researchers, conservation practitioners, NGOs, and wildlife managers",
+    "crumbs": [
+      "Workshop information",
+      "Overview"
+    ]
+  },
+  {
+    "objectID": "index.html#who-is-this-workshop-aimed-at",
+    "href": "index.html#who-is-this-workshop-aimed-at",
+    "title": "Modelling for movement and spatial ecology with animal telemetry data",
+    "section": "Who is this workshop aimed at?",
+    "text": "Who is this workshop aimed at?\n\nPostgraduate students in ecology, zoology, conservation biology, statistics, mathematics, data science, and related fields\nQuantitative ecologists and wildlife researchers\nWildlife telemetry and tracking practitioners\nConservation NGOs and protected area managers",
+    "crumbs": [
+      "Workshop information",
+      "Overview"
+    ]
+  }
+]

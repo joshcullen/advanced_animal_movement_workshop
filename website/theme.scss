@@ -1,0 +1,80 @@
+/*-- scss:defaults --*/
+
+@import url('https://fonts.googleapis.com/css2?family=Bitter');
+@import url('https://fonts.googleapis.com/css2?family=Exo');
+@import url('https://fonts.googleapis.com/css2?family=Lato');
+
+// Flyer-inspired Color Palette
+$primary:   #133C32; // Deep Forest Teal (Flyer header/banners)
+$secondary: #C87B28; // Warm Ochre / Gold (Highlights & buttons)
+$secondary-muted: #8C531B; // Muted Ochre (High contrast for white backgrounds)
+$success:   #2D6A4F; // Moss Green
+$info:      #407B6F; // Soft Teal
+$body-bg:   #FFFFFF; 
+$body-color:#1C2826; // Charcoal text
+
+// Links
+$link-color:       #C87B28;
+$link-hover-color: #A05E1A;
+
+// Navigation & Sidebar Overrides
+$navbar-bg:        #133C32;
+$sidebar-bg:       #133C32;
+$sidebar-color:    #E8F1EE;
+
+
+
+
+/*-- scss:rules --*/
+
+// Sidebar text & hover styling
+.sidebar {
+  a {
+    color: #E8F1EE !important;
+    &:hover {
+      color: #C87B28 !important;
+    }
+  }
+  
+  .sidebar-section-title {
+    color: #C87B28 !important;
+    font-weight: 600;
+  }
+}
+
+// Table of Contents (TOC) link styling
+#TOC, nav[role="doc-toc"] {
+  a {
+    color: $secondary-muted !important; // Inactive sections (muted ochre)
+    
+    &:hover {
+      color: $secondary !important; // Hover state (bright gold)
+    }
+
+    &.active {
+      color: $primary !important; // Active section (deep teal)
+      border-left-color: $secondary !important;
+      font-weight: 600;
+    }
+  }
+}
+
+// Callout boxes matching flyer tones
+.callout-note {
+  border-left-color: $primary !important;
+}
+.callout-important, .callout-warning {
+  border-left-color: $secondary !important;
+}
+
+
+
+
+#title-block-header.quarto-title-block.default .quarto-title .title {
+  font-family: "Bitter", $headings-font-family;
+  font-size: 3rem;
+}
+
+h1, h2, h3 {
+  font-family: "Lato";
+}

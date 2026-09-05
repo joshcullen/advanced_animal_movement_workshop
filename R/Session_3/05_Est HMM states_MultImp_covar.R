@@ -697,13 +697,21 @@ for (i in 1:n_distinct(crw_dat3$state_fb)) {
 
 # Explore state probabilities (e.g., 'Transit' in ID 6469)
 ggplot() +
+  geom_sf(data = africa |> 
+            st_transform(32736)) +
+  geom_sf(data = gl_pa |> 
+            st_transform(32736), color = "black", fill = NA, linewidth = 0.25) +
   geom_path(data = crw_dat3 |> 
               filter(ID == 6469), aes(x, y, group = ID), alpha = 0.5, linewidth = 0.25) +
   geom_point(data = crw_dat3 |> 
                filter(ID == 6469), aes(x, y, color = Transit), alpha = 0.5, size = 1) +
   scale_color_distiller("Pr(Transit)", palette = "Spectral", direction = -1, limits = c(0,1)) +
-  theme_bw() +
-  coord_equal()
+  theme_bw(base_size = 12) +
+  labs(x = "Easting", y = "Northing") +
+  coord_sf(xlim = crw_dat3 |> filter(ID == 6469) |> pull(x) |> range(),
+           ylim = crw_dat3 |> filter(ID == 6469) |> pull(y) |> range())
+
+# ggsave(filename = "website/images/HMM_6469_PrTransit_promo.png", units = "in", width = 6, height = 4, dpi = 400)
 
 
 

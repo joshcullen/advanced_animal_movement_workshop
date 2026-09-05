@@ -413,6 +413,7 @@ ggplot() +
 #simulated tracks do show different movement patterns, and therefore predicted UDs
 #behavioral state likely plays a large role in habitat selection and movement process not captured by this model
 
+# ggsave(filename = "website/images/iSSF_pred_UD.png", units = "in", width = 6, height = 4, dpi = 400)
 
 
 

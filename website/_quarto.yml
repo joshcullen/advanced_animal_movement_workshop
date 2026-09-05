@@ -1,0 +1,72 @@
+project:
+  type: website
+  output-dir: docs
+
+website:
+  title: "Advanced Animal Movement Modelling Workshop"
+  site-url: "https://joshcullen.github.io/website/"
+  repo-url: "https://github.com/joshcullen/advanced_animal_movement_workshop"
+  # google-analytics:
+    # tracking-id: "G-R5TYR42Z4J"
+    # anonymize-ip: true
+    # storage: cookies
+  cookie-consent:
+    type: implied
+    style: simple
+    palette: light
+  
+  page-footer:
+    right: |
+      This page is built with {{< fa brands r-project >}} and [Quarto](https://quarto.org/)
+    left: |
+      &copy; 2026, Josh Cullen. License: [MIT](https://github.com/joshcullen/advanced_animal_movement_workshop/blob/main/LICENSE)
+    background: "light"
+
+  sidebar:
+    background: "#133C32"
+    # logo: "images/logo.png"
+    pinned: true
+    align: left
+    tools:
+      - icon: github
+        href: "https://github.com/joshcullen/advanced_animal_movement_workshop"
+        text: "GitHub Repo"
+
+    style: "docked"
+    search: true
+    collapse-level: 0
+    contents:
+      - section: "Workshop information"
+        contents:
+          - href: index.qmd
+            text: Overview
+          # - href: workshop-schedule.qmd
+          #   text: Schedule
+          # - href: workshop-materials.qmd
+          #   text: Materials
+          # - href: workshop-resources.qmd
+          #   text: Useful Resources
+          # - href: workshop-prep.qmd
+          #   text: Preparing for Workshop
+      - section: "Computing"
+        # contents:
+        #   - href: computing-troubleshooting.qmd
+        #     text: Troubleshooting
+
+
+format:
+  html:
+    theme:
+      light: [litera, theme.scss]
+      dark: darkly
+    mainfont: "Atkinson Hyperlegible"
+    code-copy: true
+    code-overflow: wrap
+    toc: true
+
+freeze: auto
+
+editor: visual
+
+
+

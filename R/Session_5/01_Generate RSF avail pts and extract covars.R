@@ -7,8 +7,6 @@ library(tidyterra)
 library(rnaturalearth)
 library(sf)
 library(tictoc)
-# library(osmdata)
-# library(exactextractr)
 
 source("R/utils.R")
 

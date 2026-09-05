@@ -505,3 +505,133 @@ predict_gam_margeff <- function(fit, data) {
   
   return(final_df)
 }
+
+
+#-----------------------------------
+
+
+# Function to predict RSS from a fitted simple SSF in {amt}
+predict_ssf_margeff <- function(fit, focal_covars, data, length.out = 100) {
+  
+  # 1. Extract model terms excluding the strata term
+  # model_obj  <- if (inherits(fit, "amt_fit")) fit$model else fit
+  model_obj  <- fit$model
+  all_terms  <- attr(terms(model_obj), "term.labels")
+  model_vars <- all_terms[!grepl("^strata\\(", all_terms)]
+  
+  # 2. Build x0 (reference location with all scaled covariates held at 0)
+  x0 <- as.data.frame(matrix(0, nrow = 1, ncol = length(model_vars)))
+  names(x0) <- model_vars
+  
+  # 3. Iterate over focal covariates to generate log-RSS predictions
+  pred_df <- map(focal_covars, function(focal_var) {
+    
+    # Identify raw variable name for back-transformation
+    raw_var <- sub("_s$", "", focal_var)
+    if (!raw_var %in% names(data)) {
+      stop(sprintf("Cannot find raw variable '%s' in data.", raw_var))
+    }
+    
+    var_mean <- mean(data[[raw_var]], na.rm = TRUE)
+    var_sd   <- sd(data[[raw_var]], na.rm = TRUE)
+    
+    # Create x1 grid: vary focal covariate, hold all others at 0
+    x1 <- as.data.frame(matrix(0, nrow = length.out, ncol = length(model_vars)))
+    names(x1) <- model_vars
+    
+    focal_min <- min(data[[focal_var]], na.rm = TRUE)
+    focal_max <- max(data[[focal_var]], na.rm = TRUE)
+    x1[[focal_var]] <- seq(focal_min, focal_max, length.out = length.out)
+    
+    # Calculate log-RSS via {amt}
+    lr <- amt::log_rss(fit, x1 = x1, x2 = x0, ci = "se")
+    
+    # Process results and back-transform x-axis
+    res <- lr$df |> 
+      mutate(
+        covariate = raw_var,
+        x_scaled  = x1[[focal_var]],
+        x_natural = (x_scaled * var_sd) + var_mean,
+        rss       = exp(log_rss),
+        rss_lwr   = exp(lwr),
+        rss_upr   = exp(upr)
+      ) |> 
+      select(covariate, x_scaled, x_natural, log_rss, rss, rss_lwr, rss_upr)
+    
+    return(res)
+  }) |> 
+    list_rbind()
+  
+  return(pred_df)
+}
+
+
+#------------------------
+
+
+# Function to predict RSS from a fitted iSSF in {amt}
+predict_issf_margeff <- function(fit, focal_covars, data_steps, data_raw = NULL, length.out = 100) {
+  
+  # 1. Extract base model variables (excluding response and strata)
+  # model_obj <- if (inherits(fit, "amt_fit")) fit$model else fit
+  model_obj <- fit$model
+  raw_vars  <- all.vars(formula(model_obj))
+  base_vars <- setdiff(raw_vars, c("case_", "step_id_", "strata", "id"))
+  
+  # 2. Build x0 baseline frame with realistic defaults
+  x0 <- as.data.frame(matrix(0, nrow = 1, ncol = length(base_vars)))
+  names(x0) <- base_vars
+  
+  # Set reference defaults for movement variables if present
+  if ("sl_" %in% base_vars)     x0[["sl_"]]     <- mean(data_steps[["sl_"]], na.rm = TRUE)
+  if ("log_sl_" %in% base_vars) x0[["log_sl_"]] <- log(mean(data_steps[["sl_"]], na.rm = TRUE))
+  if ("cos_ta_" %in% base_vars) x0[["cos_ta_"]] <- mean(data_steps[["cos_ta_"]], na.rm = TRUE)
+  
+  # 3. Iterate over focal covariates
+  pred_df <- map(focal_covars, function(focal_var) {
+    
+    raw_var <- sub("_s$", "", focal_var)
+    
+    # Initialize x1 as a copy of x0 across all rows
+    x1 <- x0[rep(1, length.out), ]
+    
+    # Generate gradient sequence for focal variable
+    focal_min <- min(data_steps[[focal_var]], na.rm = TRUE)
+    focal_max <- max(data_steps[[focal_var]], na.rm = TRUE)
+    focal_seq <- seq(focal_min, focal_max, length.out = length.out)
+    x1[[focal_var]] <- focal_seq
+    
+    # Synchronize log_sl_ if sl_ is the focal variable
+    if (focal_var == "sl_" && "log_sl_" %in% base_vars) {
+      x1[["log_sl_"]] <- log(focal_seq)
+    }
+    
+    # Calculate log-RSS (amt handles interaction columns internally)
+    lr <- amt::log_rss(fit, x1 = x1, x2 = x0, ci = "se")
+    
+    # Back-transform x-axis to natural scale if raw dataset is provided
+    if (!is.null(data_raw) && raw_var %in% names(data_raw)) {
+      var_mean  <- mean(data_raw[[raw_var]], na.rm = TRUE)
+      var_sd    <- sd(data_raw[[raw_var]], na.rm = TRUE)
+      x_natural <- (focal_seq * var_sd) + var_mean
+    } else {
+      x_natural <- focal_seq
+    }
+    
+    res <- lr$df |> 
+      mutate(
+        covariate = raw_var,
+        x_scaled  = focal_seq,
+        x_natural = x_natural,
+        rss       = exp(log_rss),
+        rss_lwr   = exp(lwr),
+        rss_upr   = exp(upr)
+      ) |> 
+      select(covariate, x_scaled, x_natural, log_rss, rss, rss_lwr, rss_upr)
+    
+    return(res)
+  }) |> 
+    list_rbind()
+  
+  return(pred_df)
+}

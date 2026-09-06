@@ -43,6 +43,7 @@ cran_pkgs <- c(
   
   # Session 3: Behavioural State Estimation
   "ggforce", "optimx", "car", "future.apply", "doFuture", "mitools",
+  "glmmTMB",
   
   # Session 4: Remote Sensing & Earth Observation
   "rsi", "rstac", "osmdata", "elevatr",

@@ -54,7 +54,7 @@ dat2 |>
 track_steps <- dat2 |> 
   make_track(.x = x, .y = y, .t = date, id = id, burst_ = burst, crs = 32736) |>  #"burst_" col must have trailing underscore to match required {amt} syntax
   nest(data = -id) |> 
-  # This is what you would do if resampling time intervals
+  ## This is what you would do if resampling time intervals
   # mutate(steps = map(data, ~{
   #   .x |> track_resample(rate = hours(1), tolerance = minutes(15)) |> steps_by_burst()
   # })) |> 
@@ -85,7 +85,7 @@ track_steps |>
 tic()
 track_steps_presabs <- track_steps |> 
   random_steps(n_control = 10)  #assumes Gamma and Von Mises distribs for SL and TA, respectively, by default
-toc()
+toc()  #took 12 sec
 
 track_steps_presabs
 # We now have columns 'case_' and 'step_id_', referring to whether the point was observed (TRUE) or randomly sampled (FALSE) and the 'strata' or step number per ID/burst
@@ -194,8 +194,8 @@ ggplot(ssf_preds, aes(x = x_natural, y = rss)) +
 ################
 
 track_steps_covars2 <- track_steps_covars |> 
-  mutate(log_sl_      = log(sl_),      # Required for updated gamma step length parameters
-         cos_ta_      = cos(ta_)       # Required for updated von Mises turn angle parameters
+  mutate(log_sl_ = log(sl_),      # Required for updated gamma step length parameters
+         cos_ta_ = cos(ta_)       # Required for updated von Mises turn angle parameters
          )
 
 ### Fit simple integrated SSF
@@ -360,8 +360,8 @@ sim_paths_all <- map_dfr(animal_ids, function(animal_id) {  #map across IDs
   )
   
   # Generate 10 simulated paths of 200 steps for this animal (~10 days)
-  #This will create a transient UD.
-  #For a steady-state UD, either increase `n` or choose many more random starting points.
+  #This will create a transient UD
+  #For a steady-state UD, either increase `n` and/or choose many more random starting points
   map_dfr(1:10, function(sim_i) {  #Map across sim number
     simulate_path(kernel, n.steps = 200) |> 
       mutate(id = animal_id, sim = sim_i)
@@ -378,6 +378,7 @@ sim_sf <- make_track(sim_paths_all, .x = x_, .y = y_, crs = 32736) |>
   as_sf_points()
 
 # Rasterize point counts across all animals and paths onto the landscape grid
+#alternatively, the UD estimation could also be done w/ hr_kde() for contours of 'track' objects
 ud_counts <- rasterize(
   x          = sim_sf, 
   y          = rast_stack_s[[1]], 

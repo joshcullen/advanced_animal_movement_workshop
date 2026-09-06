@@ -1,6 +1,7 @@
 ---
 title: "Modelling for movement and spatial ecology with animal telemetry data"
 ---
+![](images/workshop_hero_img.png)
 
 # From telemetry data to ecological inference and conservation action
 

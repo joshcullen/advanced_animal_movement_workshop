@@ -9,6 +9,9 @@ library(rnaturalearth)
 library(mgcv)
 library(gratia)
 library(tictoc)
+library(glmmTMB)
+
+source("R/utils.R")
 
 
 
@@ -163,6 +166,109 @@ ggplot(gam_preds, aes(x = x_natural, y = rss)) +
 
 
 
+#########################################
+### Fit RSF as mixed-effects IWLR GLM ###
+#########################################
+
+#This example follows recommendations from Muff et al. (2020) "Accounting for individual-specific variation in habitat-selection studies: Efficient estimation of mixed-effects models using Bayesian or frequentist computation" (https://doi.org/10.1111/1365-2656.13087)
+
+#Essentially, we'll be fitting the RSF GLM again, but now allowing the intercept AND slope to vary by individual. This is much better practice than applying random intercepts alone. Another option is the 2-step approach recommended by John Fieberg (e.g., Fieberg et al. 2009; https://doi.org/10.1111/j.1365-2664.2009.01692.x) where each individual has a separate RSF fitted, and then these are combined in a principled way to achieve population inference; this is a good option if not wanting to rely on assumptions typically used for random effects.
+
+# This example implements this hierarchical approach in {glmmTMB}, which will slightly differ from using INLA/inlabru or a purely Bayesian model
+
+
+# Set up (but don't yet fit) model
+rsf_linear_h.tmp <- glmmTMB(obs ~ dist2pop_s + dist2water_s + ndvi_s +  #fixed effects
+                          (1|id) + (0 + dist2pop_s|id) + (0 + dist2water_s|id) + (0 + ndvi_s|id),  #varying effects
+                        family = binomial(link = "logit"),
+                        data = dat2, 
+                        doFit = FALSE,
+                        weights = wts)
+
+# Fix SD of first random term (`(1|id)`; varying intercept) to 1e3 (i.e., 1000), which corresponds to variance of 1e6
+#must be on log scale
+rsf_linear_h.tmp$parameters$theta[1] <- log(1e3)
+
+# Tell glmmTMB to leave the first param "theta[1]" as fixed, but estimate all others
+rsf_linear_h.tmp$mapArg <- list(theta = factor(c(NA, 1:3)))  #vector must be length of fixed effects
+
+
+### Fit the hierarchical model ###
+tic()
+rsf_linear_h <- fitTMB(rsf_linear_h.tmp)
+toc()  #took 45 sec
+
+summary(rsf_linear_h)
+#results show some general differences compared to simple RSF
+
+
+
+
+### Extract Population-Level & Individual Selection Ratios ###
+
+# Extract pop-level fixed effects
+pop_coefs <- fixef(rsf_linear_h)$cond[-1]  #exclude intercept
+
+# Calculate population relative selection strengths (excluding intercept)
+selection_ratios_pop <- exp(pop_coefs)
+selection_ratios_pop
+#relatively similar to simple linear RSF, but effect of dist2pop is actually stronger
+
+# Extract individual-level coefficients (Fixed + Random Slopes per ID)
+indiv_coefs <- coef(rsf_linear_h)$cond$id[,-1]  #remove intercept
+indiv_selection_ratios <- exp(indiv_coefs)
+indiv_selection_ratios
+#plenty of inter-individual variability per covar
+
+
+### Predict marginal effects
+covars <- c("dist2pop_s", "dist2water_s", "ndvi_s")
+
+# Predict population-level marginal effects for RSS w/ 95% CI 
+rsf_preds <- predict_rsf_margeff(fit = rsf_linear_h, focal_covars = covars, intercept = TRUE, data = dat2,
+                                 level = "population")
+
+# Plot all marginal effects
+ggplot(rsf_preds, aes(x = x_natural, y = rss)) +
+  geom_line(color = "#2c7fb8", linewidth = 1) +
+  geom_ribbon(aes(ymin = rss_lwr, ymax = rss_upr), fill = "#2c7fb8", alpha = 0.2) +
+  geom_hline(yintercept = 1, linetype = "dashed", color = "darkred") +
+  facet_wrap(~ covariate, scales = "free_x", strip.position = "bottom") +
+  labs(
+    title = "Pop.-Level Marginal Effects of Covariates for Mixed-Effects RSF",
+    subtitle = "Relative Selection Strength (RSS) with other covariates held at their mean",
+    y = "Relative Selection Strength (RSS)",
+    x = NULL
+  ) +
+  theme_minimal(base_size = 14) +
+  theme(strip.placement = "outside", strip.text = element_text(face = "bold"))
+
+
+
+
+# Predict individual-level marginal effects for RSS w/ 95% CI 
+rsf_preds_id <- predict_rsf_margeff(fit = rsf_linear_h, focal_covars = covars, intercept = TRUE, data = dat2,
+                                 level = "individual")
+
+# Plot all marginal effects
+ggplot(rsf_preds_id, aes(x = x_natural, y = rss, group = id, color = factor(id))) +
+  geom_line(linewidth = 1) +
+  scale_color_brewer("ID", palette = "Set1") +
+  geom_hline(yintercept = 1, linetype = "dashed", color = "darkred") +
+  facet_wrap(~ covariate, scales = "free_x", strip.position = "bottom") +
+  labs(
+    title = "ID-Level Marginal Effects of Covariates for Mixed-Effects RSF",
+    subtitle = "Relative Selection Strength (RSS) with other covariates held at their mean",
+    y = "Relative Selection Strength (RSS)",
+    x = NULL
+  ) +
+  theme_minimal(base_size = 14) +
+  theme(strip.placement = "outside", strip.text = element_text(face = "bold"))
+
+
+
+
+
 
 #########################################
 ### Make spatial prediction from RSFs ###
@@ -192,16 +298,24 @@ cov_stack <- c(dist2water_s, dist2pop_s, ndvi_s_mean)
 names(cov_stack) <- c("dist2water_s", "dist2pop_s", "ndvi_s")
 
 
-# Predict relative intensity (i.e., relative abundance)
-rsf_map_linear <- predict(cov_stack, rsf_linear, type = "response")
-rsf_map_gam <- predict(cov_stack, rsf_gam, type = "response")
+# Predict log(relative intensity) (i.e., log relative abundance)
+#Also generally a good idea to show the uncertainty in predictions too, although this should be done w/ intercept removed
+rsf_map_linear <- predict(cov_stack, rsf_linear, fun = predict_rsf_raster, type = "all")
+rsf_map_gam <- predict(cov_stack, rsf_gam, fun = predict_gam_rsf, type = "all")
+rsf_map_linear_h <- predict(cov_stack, rsf_linear_h, fun = predict_rsf_raster, type = "all") 
+
+# Exponentiate log-scale models
 
 
 # Map predictions compared to tracks
-rast_preds <- c(rsf_map_linear, rsf_map_gam)
-names(rast_preds) <- c("GLM", "GAM")
+rast_preds <- c(rsf_map_linear$rss, rsf_map_gam$rss, rsf_map_linear_h$rss)
+names(rast_preds) <- c("GLM", "GAM", "GLMM")
+
+rast_pred_se <- c(rsf_map_linear$se_link, rsf_map_gam$se_link, rsf_map_linear_h$se_link)
+names(rast_pred_se) <- c("GLM", "GAM", "GLMM")
 
 
+# Viz mapped predictions of RSS (mean)
 ggplot() +
   geom_spatraster(data = rast_preds) +
   scale_fill_viridis_c("Relative Intensity", na.value = "transparent") +
@@ -225,5 +339,29 @@ ggplot() +
 #GLM seems to be an oversimplification, whereas GAM seems to predict these tracks better
 
 
-#NOTE: The GAM results are still suspect given that the marginal effects suggested that staying close to human settlements was the strongest effect of the different covars. Marginal effects also suggested that these 3 elephants were more likely to choose areas that were 15-40 km from water (likely related to coarsening of water layer). Also of mention is that these estimates are VERY precise, owing to that fact that it treats all points as independent observations, which is certainly not the case (due to autocorrelation w/in tracks). Also expected to be variability among individuals that will likely drive greater uncertainty and lower effect sizes.
+# Viz mapped prediction uncertainty of RSS (SE)
+ggplot() +
+  geom_spatraster(data = rast_pred_se) +
+  scale_fill_viridis_c("SD of Relative Intensity", option = "rocket", na.value = "transparent") +
+  geom_sf(data = africa, fill = NA, color = "white", lwd = 1) +
+  geom_path(data = dat2 |> 
+              filter(obs == 1),  #only keep the observed locs
+            aes(x, y, group = id), color = "white", lwd = 0.25, alpha = 0.5) +
+  theme_bw(base_size = 14) +
+  theme(strip.text = element_text(face = "bold"),
+        legend.position = "top") +
+  guides(fill = guide_colorbar(
+    title.position = "top",         # Moves title above the bar for more space
+    barwidth = unit(10, "cm"),      # Lengthens the colorbar (adjust as needed)
+    barheight = unit(0.5, "cm")     # Adjusts the thickness
+  )) +
+  labs(x = "Easting", y = "Northing") +
+  coord_sf(xlim = ext(rast_preds)[1:2],
+           ylim = ext(rast_preds)[3:4],
+           expand = FALSE) +
+  facet_wrap(~ lyr)
+#GLMM shows much greater uncertainty since it actually accounts for ID variability
+
+
+#NOTE: The GAM results are still suspect given that the marginal effects suggested that staying close to human settlements was the strongest effect of the different covars. Marginal effects also suggested that these 3 elephants were more likely to choose areas that were 15-40 km from water (likely related to coarsening of water layer). Also of mention is that these estimates are VERY precise, owing to that fact that it treats all points as independent observations, which is certainly not the case (due to autocorrelation w/in tracks). Also expected to be variability among individuals that will likely drive greater uncertainty and lower effect sizes, which was somewhat accounted for in the mixed-effects model. While not shown here, it's also possible to account for varying slopes in GAMs as well.
 

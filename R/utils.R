@@ -397,63 +397,160 @@ get_hmm_densities <- function(model, metric = "step", n_points = 1000) {
 #--------------------------
 
 
-predict_rsf_margeff <- function(fit, focal_covars, data, intercept, length.out = 100) {
-  # Get all predictor variables used in the model (excluding the response)
-  model_vars <- attr(terms(fit), "term.labels")
+predict_rsf_margeff <- function(fit, 
+                                focal_covars, 
+                                data, 
+                                intercept = TRUE, 
+                                level = "population", # "population" or "individual"
+                                id_col = NULL,        # Name of ID grouping factor for individual level
+                                length.out = 100) {
   
-  # Extract the arbitrary intercept (tied to background sample weight/size)
-  if (intercept) {  #check whether Intercept estimated in model
-    intercept <- coef(fit)["(Intercept)"]
+  # 1. Extract formula terms, coefficients, and covariance matrix
+  is_tmb <- inherits(fit, "glmmTMB")
+  
+  if (is_tmb) {
+    # Strip random effect (bar) terms to safely build fixed-effects design matrix X
+    fixed_formula <- reformulas::nobars(formula(fit))
+    cond_terms    <- delete.response(terms(fixed_formula))
+    
+    beta <- glmmTMB::fixef(fit)$cond
+    V    <- glmmTMB:::vcov.glmmTMB(fit)$cond
   } else {
-    intercept <- 0
+    cond_terms <- delete.response(terms(fit))
+    beta <- coef(fit)
+    V    <- vcov(fit)
   }
   
+  # Remove NA coefficients if present
+  valid_coefs <- !is.na(beta)
+  beta <- beta[valid_coefs]
+  V    <- V[names(beta), names(beta), drop = FALSE]
   
-  # Iterate over each focal covariate to generate predictions
+  # Identify raw variables required for fixed terms
+  required_vars <- all.vars(cond_terms)
+  
+  # 2. Setup individual-level parameters if requested
+  if (level == "individual") {
+    if (!is_tmb) {
+      stop("Individual-level predictions are currently designed for glmmTMB mixed models.")
+    }
+    
+    # Auto-detect ID column if not specified
+    if (is.null(id_col)) {
+      ran_names <- names(glmmTMB::ranef(fit)$cond)
+      if (length(ran_names) > 0) {
+        id_col <- ran_names[1]
+        message(sprintf("Auto-detected ID column: '%s'", id_col))
+      } else {
+        stop("No random effects found in the model to generate individual predictions.")
+      }
+    }
+    
+    # Extract individual-level coefficients (Fixed + Random)
+    indiv_coef_df <- coef(fit)$cond[[id_col]]
+    if (is.null(indiv_coef_df)) {
+      stop(sprintf("Could not extract random coefficients for group '%s'.", id_col))
+    }
+  }
+  
+  # 3. Iterate over focal covariates
   pred_df <- map(focal_covars, function(focal_var) {
     
-    # 1. Identify the raw variable name (assuming the scaled variables end in "_s")
     raw_var <- sub("_s$", "", focal_var)
     
     if (!raw_var %in% names(data)) {
       stop(sprintf("Cannot find raw variable '%s' in data.", raw_var))
     }
     
-    # 2. Calculate summary statistics from the raw data for back-transformation
     var_mean <- mean(data[[raw_var]], na.rm = TRUE)
     var_sd   <- sd(data[[raw_var]], na.rm = TRUE)
     
-    # 3. Create new_data for prediction
-    # Initialize all model variables at 0 (their scaled mean)
-    new_data <- as.data.frame(matrix(0, nrow = length.out, ncol = length(model_vars)))
-    names(new_data) <- model_vars
-    
-    # Vary only the focal variable from its scaled minimum to maximum
     focal_min <- min(data[[focal_var]], na.rm = TRUE)
     focal_max <- max(data[[focal_var]], na.rm = TRUE)
-    new_data[[focal_var]] <- seq(focal_min, focal_max, length.out = length.out)
+    focal_seq <- seq(focal_min, focal_max, length.out = length.out)
     
-    # 4. Generate predictions on the link (log) scale
-    preds <- predict(fit, newdata = new_data, type = "link", se.fit = TRUE)
+    # Build prediction dataframe with non-focal variables set to 0 (their scaled mean)
+    df_new <- as.data.frame(matrix(0, nrow = length.out, ncol = length(required_vars)))
+    names(df_new) <- required_vars
+    df_new[[focal_var]] <- focal_seq
     
-    # 5. Process results into a tidy format
-    res <- data.frame(
-      covariate = raw_var,
-      x_scaled  = new_data[[focal_var]],
-      log_rss   = preds$fit - intercept
-    ) |> 
-      mutate(
-        log_rss_lwr = log_rss - (1.96 * preds$se.fit),
-        log_rss_upr = log_rss + (1.96 * preds$se.fit),
-        rss         = exp(log_rss),
-        rss_lwr     = exp(log_rss_lwr),
-        rss_upr     = exp(log_rss_upr),
-        x_natural   = (x_scaled * var_sd) + var_mean
-      )
+    # Generate Model Matrix X
+    X <- model.matrix(cond_terms, data = df_new)
+    common_cols <- intersect(colnames(X), names(beta))
+    X <- X[, common_cols, drop = FALSE]
     
-    return(res)
-  }) |> 
-    list_rbind() # Combine the list of dataframes into a single tidy dataframe
+    # Zero out the intercept column so it doesn't inflate SEs
+    if ("(Intercept)" %in% colnames(X)) {
+      X[, "(Intercept)"] <- 0
+    }
+    
+    # --- A. POPULATION-LEVEL PREDICTIONS ---
+    if (level == "population") {
+      beta_sub <- beta[common_cols]
+      V_sub    <- V[common_cols, common_cols, drop = FALSE]
+      
+      # if (intercept && "(Intercept)" %in% names(beta_sub)) {
+      #   int_val <- beta_sub["(Intercept)"]
+      # } else {
+      #   int_val <- 0
+      # }
+      
+      # Linear predictor (X %*% beta) and Standard Errors sqrt(diag(X %*% V %*% t(X)))
+      fit_link <- as.vector(X %*% beta_sub)
+      se_link  <- sqrt(rowSums((X %*% V_sub) * X))
+      
+      res <- data.frame(
+        covariate = raw_var,
+        x_scaled  = focal_seq,
+        log_rss   = fit_link,
+        se_link   = se_link
+      ) |> 
+        mutate(
+          log_rss_lwr = log_rss - (1.96 * se_link),
+          log_rss_upr = log_rss + (1.96 * se_link),
+          rss         = exp(log_rss),
+          rss_lwr     = exp(log_rss_lwr),
+          rss_upr     = exp(log_rss_upr),
+          x_natural   = (x_scaled * var_sd) + var_mean
+        )
+      
+      return(res)
+      
+      # --- B. INDIVIDUAL-LEVEL PREDICTIONS ---
+    } else if (level == "individual") {
+      
+      id_levels <- rownames(indiv_coef_df)
+      
+      indiv_res_list <- map(id_levels, function(id_i) {
+        # Extract individual specific coefficients (Fixed + Random)
+        b_i <- as.numeric(indiv_coef_df[id_i, common_cols])
+        names(b_i) <- common_cols
+        
+        # if (intercept && "(Intercept)" %in% common_cols) {
+        #   int_val_i <- b_i["(Intercept)"]
+        # } else {
+        #   int_val_i <- 0
+        # }
+        
+        # Individual linear predictor
+        fit_link_i <- as.vector(X %*% b_i)
+        
+        data.frame(
+          id        = id_i,
+          covariate = raw_var,
+          x_scaled  = focal_seq,
+          log_rss   = fit_link_i
+        ) |> 
+          mutate(
+            rss       = exp(log_rss),
+            x_natural = (x_scaled * var_sd) + var_mean
+          )
+      }) |> list_rbind()
+      
+      return(indiv_res_list)
+    }
+    
+  }) |> list_rbind()
   
   return(pred_df)
 }
@@ -635,3 +732,94 @@ predict_issf_margeff <- function(fit, focal_covars, data_steps, data_raw = NULL,
   
   return(pred_df)
 }
+
+
+#-----------------------------
+
+
+# Function for properly handling GLM(M) when making spatial prediction w/ terra::predict()
+predict_rsf_raster <- function(model, data, type = "all", ...) {
+  
+  # 1. Extract fixed coefficients and covariance matrix
+  if (inherits(model, "glmmTMB")) {
+    beta   <- glmmTMB::fixef(model)$cond
+    V_full <- glmmTMB:::vcov.glmmTMB(model)$cond
+  } else {
+    beta   <- coef(model)
+    V_full <- vcov(model)
+  }
+  
+  # Exclude intercept to focus on relative selection strength
+  beta_covars <- beta[names(beta) != "(Intercept)"]
+  cov_names   <- names(beta_covars)
+  
+  # Extract covariance matrix for non-intercept slope terms
+  V <- V_full[cov_names, cov_names, drop = FALSE]
+  
+  # 2. Extract raster chunk design matrix X
+  X <- as.matrix(data[, cov_names, drop = FALSE])
+  
+  # 3. Calculate log(RSS) point estimate
+  log_rss <- as.vector(X %*% beta_covars)
+  
+  # 4. Standard Error on the log scale: sqrt(diag(X %*% V %*% t(X)))
+  se_link <- sqrt(rowSums((X %*% V) * X))
+  
+  # 5. Return outputs based on specified type
+  if (type == "rss") {
+    return(exp(log_rss))
+    
+  } else if (type == "se_link") {
+    return(se_link) # Spatial SD/SE on the log-RSS scale
+    
+  } else if (type == "se_rss") {
+    return(exp(log_rss) * se_link) # Delta-method SE on exponential scale
+    
+  } else if (type == "all") {
+    # Returns 4 columns ->terra outputs a 4-layer raster
+    log_lwr <- log_rss - (1.96 * se_link)
+    log_upr <- log_rss + (1.96 * se_link)
+    
+    out <- cbind(
+      rss     = exp(log_rss),
+      se_link = se_link,
+      rss_lwr = exp(log_lwr),
+      rss_upr = exp(log_upr)
+    )
+    return(out)
+  }
+}
+
+
+#-----------------------------
+
+
+# Function for properly handling GAM when making spatial prediction w/ terra::predict()
+predict_gam_rsf <- function(model, data, type = "all") {
+  df_chunk <- as.data.frame(data)
+  
+  # Generate design matrix X for all smooth and parametric terms
+  X <- mgcv::predict.gam(model, newdata = df_chunk, type = "lpmatrix")
+  
+  # Zero out the intercept column to isolate relative selection strength
+  if ("(Intercept)" %in% colnames(X)) {
+    X[, "(Intercept)"] <- 0
+  }
+  
+  beta <- coef(model)
+  V    <- vcov(model)
+  
+  log_rss <- as.vector(X %*% beta)
+  se_link <- sqrt(rowSums((X %*% V) * X))
+  
+  if (type == "rss") return(exp(log_rss))
+  if (type == "all") {
+    return(cbind(
+      rss     = exp(log_rss),
+      se_link = se_link,
+      rss_lwr = exp(log_rss - 1.96 * se_link),
+      rss_upr = exp(log_rss + 1.96 * se_link)
+    ))
+  }
+}
+

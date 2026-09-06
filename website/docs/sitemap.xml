@@ -1,7 +1,27 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   <url>
-    <loc>https://joshcullen.github.io/website/index.html</loc>
-    <lastmod>2026-09-05T19:38:34.737Z</lastmod>
+    <loc>https://joshcullen.github.io/advanced_animal_movement_workshop/computing-troubleshooting.html</loc>
+    <lastmod>2026-09-05T20:16:05.419Z</lastmod>
+  </url>
+  <url>
+    <loc>https://joshcullen.github.io/advanced_animal_movement_workshop/index.html</loc>
+    <lastmod>2026-09-05T20:36:31.030Z</lastmod>
+  </url>
+  <url>
+    <loc>https://joshcullen.github.io/advanced_animal_movement_workshop/workshop-materials.html</loc>
+    <lastmod>2026-09-05T20:35:28.233Z</lastmod>
+  </url>
+  <url>
+    <loc>https://joshcullen.github.io/advanced_animal_movement_workshop/workshop-schedule.html</loc>
+    <lastmod>2026-09-05T20:37:11.663Z</lastmod>
+  </url>
+  <url>
+    <loc>https://joshcullen.github.io/advanced_animal_movement_workshop/workshop-resources.html</loc>
+    <lastmod>2026-09-05T22:16:32.611Z</lastmod>
+  </url>
+  <url>
+    <loc>https://joshcullen.github.io/advanced_animal_movement_workshop/workshop-prep.html</loc>
+    <lastmod>2026-09-05T20:46:04.550Z</lastmod>
   </url>
 </urlset>

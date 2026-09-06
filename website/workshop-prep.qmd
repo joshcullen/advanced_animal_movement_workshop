@@ -1,0 +1,92 @@
+---
+title: "Preparing for the Workshop"
+subtitle: "Software Installation & R Package Setup"
+format:
+  html:
+    toc: true
+---
+
+This workshop assumes a working knowledge of R and RStudio (or Positron / VS Code). Please complete the installation steps below **before attending Day 1** to ensure all required packages and system toolchains are working properly.
+
+::: {.callout-warning}
+## 🛠️ Developer Tools Required
+Some spatial and state-space packages (`momentuHMM`, `aniMotum`, `ctmm`) compile C++ code locally during installation:
+* **Windows Users:** Download and install [Rtools](https://cran.r-project.org/bin/windows/Rtools/) corresponding to your R version.
+* **macOS Users:** Install Xcode Command Line Tools by running `xcode-select --install` in your Terminal. You may also need a suitable [gfortran compiler](https://github.com/fxcoudert/gfortran-for-macOS/releases).
+:::
+
+---
+
+## Automated R Package Installation
+
+Copy and paste the code chunk below directly into your R console. This script automatically checks for missing packages, installs standard versions from CRAN, and pulls bleeding-edge versions from R-Universe or GitHub.
+
+```r
+# ==============================================================================
+# Workshop Package Installer
+# Advanced Animal Movement Modelling Training Workshop (2026)
+# ==============================================================================
+
+# 1. Install package managers if missing
+if (!requireNamespace("remotes", quietly = TRUE)) install.packages("remotes")
+if (!requireNamespace("pak", quietly = TRUE)) install.packages("pak")
+
+# 2. Standard CRAN Packages
+cran_pkgs <- c(
+  # Session 1: Foundations & Data Wrangling
+  "tidyverse", "readxl", "plotly", "bayesmove", "shinythemes", 
+  "viridis", "rnaturalearth", "scico", "amt",
+  
+  # Session 2: Space Use & Movement
+  "terra", "tidyterra", "tictoc", "units", "move", "ctmm", 
+  "progressr", "furrr",
+  
+  # Session 3: Behavioural State Estimation
+  "ggforce", "optimx", "car", "future.apply", "doFuture", "mitools",
+  
+  # Session 4: Remote Sensing & Earth Observation
+  "rsi", "rstac", "osmdata", "elevatr",
+  
+  # Session 5: Species-Habitat Associations & SSFs
+  "lwgeom", "mgcv", "gratia"
+)
+
+# Install missing CRAN packages
+missing_cran <- cran_pkgs[!(cran_pkgs %in% installed.packages()[, "Package"])]
+if (length(missing_cran) > 0) {
+  message("Installing missing CRAN packages: ", paste(missing_cran, collapse = ", "))
+  install.packages(missing_cran)
+}
+
+# 3. Special Repositories (R-Universe & GitHub)
+
+# High-resolution maps (rOpenSci R-Universe)
+if (!requireNamespace("rnaturalearthhires", quietly = TRUE)) {
+  message("Installing rnaturalearthhires...")
+  install.packages("rnaturalearthhires", repos = "[https://ropensci.r-universe.dev](https://ropensci.r-universe.dev)", type = "source")
+}
+
+# aniMotum (Ian Jonsen R-Universe)
+message("Installing latest aniMotum from R-Universe...")
+install.packages(
+  "aniMotum", 
+  repos = c("[https://ianjonsen.r-universe.dev](https://ianjonsen.r-universe.dev)", "[https://cloud.r-project.org](https://cloud.r-project.org)"),
+  dependencies = TRUE
+)
+
+# momentuHMM v2.0.0 (GitHub)
+message("Installing momentuHMM (v2.0.0) from GitHub...")
+remotes::install_github("bmcclintock/momentuHMM", dependencies = TRUE)
+
+# 4. Verification Check
+message("\n--- Installation Verification ---")
+all_pkgs <- c(cran_pkgs, "rnaturalearthhires", "aniMotum", "momentuHMM")
+installed <- all_pkgs %in% installed.packages()[, "Package"]
+
+if (all(installed)) {
+  message("✅ All workshop packages are successfully installed!")
+} else {
+  warning("⚠️ The following packages failed to install: ", 
+          paste(all_pkgs[!installed], collapse = ", "))
+}
+```

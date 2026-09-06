@@ -334,10 +334,11 @@ set.seed(2026)
 animal_ids <- unique(dat2$id)
 
 # Iterate through each ID, calculate its kernel, and run 10 simulations each
+#Example from Johannes Signer shown here: https://github.com/jmsigner/amt/issues/93
 tic()
 sim_paths_all <- map_dfr(animal_ids, function(animal_id) {  #map across IDs
   
-  # Extract starting location for current animal
+  # Extract starting location for current animal (although we could randomly sample from study area)
   start_pt <- dat2 |> 
     filter(id == animal_id) |> 
     make_track(.x = x, .y = y, .t = date, crs = 32736) |> 
@@ -359,11 +360,13 @@ sim_paths_all <- map_dfr(animal_ids, function(animal_id) {  #map across IDs
   )
   
   # Generate 10 simulated paths of 200 steps for this animal (~10 days)
-  ##Normally, tracks should be simulated over longer time period
+  #This will create a transient UD.
+  #For a steady-state UD, either increase `n` or choose many more random starting points.
   map_dfr(1:10, function(sim_i) {  #Map across sim number
     simulate_path(kernel, n.steps = 200) |> 
       mutate(id = animal_id, sim = sim_i)
   })
+  # replicate(10, simulate_path(kernel, n.steps = 200), simplify = FALSE)
   
 }, .progress = TRUE)
 

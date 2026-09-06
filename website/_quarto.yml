@@ -4,7 +4,7 @@ project:
 
 website:
   title: "Advanced Animal Movement Modelling Workshop"
-  site-url: "https://joshcullen.github.io/website/"
+  site-url: "https://joshcullen.github.io/advanced_animal_movement_workshop/"
   repo-url: "https://github.com/joshcullen/advanced_animal_movement_workshop"
   repo-subdir: website
   # google-analytics:
@@ -41,14 +41,14 @@ website:
         contents:
           - href: index.qmd
             text: Overview
-          # - href: workshop-schedule.qmd
-          #   text: Schedule
-          # - href: workshop-materials.qmd
-          #   text: Materials
-          # - href: workshop-resources.qmd
-          #   text: Useful Resources
-          # - href: workshop-prep.qmd
-          #   text: Preparing for Workshop
+          - href: workshop-schedule.qmd
+            text: Schedule
+          - href: workshop-materials.qmd
+            text: Materials
+          - href: workshop-resources.qmd
+            text: Useful Resources
+          - href: workshop-prep.qmd
+            text: Preparing for Workshop
       - section: "Computing"
         # contents:
         #   - href: computing-troubleshooting.qmd

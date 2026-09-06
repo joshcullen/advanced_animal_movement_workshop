@@ -1,0 +1,50 @@
+---
+title: "Workshop Schedule"
+subtitle: "16–17 September 2026 | Stellenbosch University & Online"
+format:
+  html:
+    toc: true
+---
+
+This page outlines the schedule for the two-day **Advanced Animal Movement Modelling Training Workshop**. All times are listed in **South Africa Standard Time (SAST, UTC+2)**.
+
+::: {.callout-note icon=false}
+## 📍 Venues
+* **In-Person:** NITheCS Seminar Room, Merensky Building, Stellenbosch University, South Africa
+* **Online:** Zoom link provided upon registration
+:::
+
+::: {.panel-tabset}
+
+## **Day 1:** 16 Sept 2026
+
+**Focus: Animal Movement Patterns**
+
+| Time | Session & Details |
+| :--- | :--- |
+| **08:30 – 10:15** | **Session 1: Foundations of Movement Ecology** <br> • The movement ecology paradigm<br> • Wildlife telemetry systems and sampling design<br> • Example applications to conservation<br> • *Hands-on coding:* Data exploration, cleaning, and processing |
+| **10:15 – 10:30** | ☕ **Tea Break** |
+| **10:30 – 12:15** | **Session 2: Space Use Estimation** <br> • Utilisation distributions (UDs) and ecological interpretation<br> • Occurrence vs. range distributions<br> • KDE, dynamic Brownian bridge movement models (dBBMM), and AKDE approaches<br> • Individual- and population-level space use estimation & spatial overlap<br> • *Hands-on coding:* Estimate space use using multiple methods |
+| **12:15 – 13:15** | 🥪 **Lunch Break** |
+| **13:15 – 15:45** | **Session 3: Behavioural State Modelling** <br> • Defining behavioural states & temporal resolution impacts<br> • Discrete vs. continuous states (HMMs & SSMs)<br> • Interpreting estimated states & drawing ecological inferences<br> • Integrating accelerometer and auxiliary sensor data<br> • *Hands-on coding:* Regularise tracks & estimate states using HMMs and SSMs |
+| **15:45 – 16:00** | ☕ **Tea Break** |
+| **16:00 – 16:30** | 💬 **Q&A Session** |
+| **18:00 – 21:00** | 🍷 **Social Event:** Drinks at a Stellenbosch wine farm (TBC) |
+
+## **Day 2:** 17 Sept 2026
+
+**Focus: Environmental Data, Habitat Selection & Emerging Methods**
+
+| Time | Session & Details |
+| :--- | :--- |
+| **08:30 – 10:00** | **Session 4: Environmental Data Access and Extraction** <br> • Remote sensing products (LULC, NDVI, temperature, dynamic water)<br> • Local geoprocessing and cloud workflows via Google Earth Engine<br> • Environmental annotation of movement tracks<br> • *Hands-on coding:* Download/process remote-sensing data & extract time-matched layers |
+| **10:00 – 10:15** | ☕ **Tea Break** |
+| **10:15 – 12:45** | **Session 5: Species-Habitat Associations** <br> • Resource selection functions (RSFs), step selection functions (SSFs), and iSSFs<br> • Scale dependence & state-specific habitat selection<br> • *Hands-on coding:* Fit RSF, SSF, and iSSF models; interpret results, generate spatial predictions, and compare inferences |
+| **12:45 – 13:45** | 🥪 **Lunch Break** |
+| **13:45 – 15:15** | **Session 6: Bayesian Modelling for Ecological Inference** <br> • Crash course in Bayesian modelling & model checking<br> • Post hoc Bayesian analyses using Stan and `brms`<br> • Bayesian hierarchical RSF/SSF models & spatial random effects using INLA<br> • *Hands-on coding:* Complete a Bayesian workflow & explore fast implementations in INLA |
+| **15:15 – 15:30** | ☕ **Tea Break** |
+| **15:30 – 16:00** | **Session 7: Machine Learning and Emerging Directions** <br> • Behavioural classification & habitat selection via Random Forests, GBMs, and Gaussian processes<br> • Deep learning applications for accelerometer data and SSFs<br> • Emerging directions in predictive movement ecology |
+| **16:00 – 16:30** | 💬 **Q&A Session** |
+| **18:00 – 21:00** | 🍷 **Social Event:** Drinks at a Stellenbosch wine farm (TBC) |
+
+:::

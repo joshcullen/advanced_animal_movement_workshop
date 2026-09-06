@@ -1,0 +1,146 @@
+---
+title: "Resources & Literature"
+subtitle: "Software Tutorials, Package Repositories, and Core Movement Literature"
+format:
+  html:
+    toc: true
+---
+
+This page provides links to official package documentation and software repositories, alongside a curated bibliography of foundational and recent literature across movement ecology modeling topics.
+
+::: {.panel-tabset}
+
+## 📦 R Packages & Tutorials
+
+### Behavioural State Estimation
+* **`aniMotum`**: [Package Website](https://ianjonsen.github.io/aniMotum) | [GitHub Repository](https://github.com/ianjonsen/aniMotum)
+* **`momentuHMM`**: [Package Vignette & Manual](https://cran.r-project.org/web/packages/momentuHMM/vignettes/momentuHMM.pdf) | [GitHub Repository](https://github.com/bmcclintock/momentuHMM)
+* **`bayesmove`**: [Package Website](https://joshcullen.github.io/bayesmove/) | [GitHub Repository](https://github.com/joshcullen/bayesmove)
+
+### Space-Use & Telemetry Processing
+* **`amt`** *(Animal Movement Tools)*: [Package Documentation](https://jmsigner.r-universe.dev/articles) | [GitHub Repository](https://github.com/jmsigner/amt)
+* **`ctmm`** *(Continuous-Time Movement Modeling)*: [Package Vignettes](https://ctmm-initiative.github.io/ctmm/) | [GitHub Repository](https://github.com/ctmm-initiative/ctmm)
+* **`move` / `move2`**: [Package Website](https://bartk.gitlab.io/move/) | [Move2 Documentation](https://cran.r-project.org/web/packages/move2/index.html)
+
+### Geospatial Data Processing
+* **`rsi`** *(Remote Sensing Integration)*: [Package Documentation](https://bryce-m.github.io/rsi/)
+* **`rstac`** *(STAC API Client)*: [Package Documentation](https://brazil-data-cube.github.io/rstac/)
+* **`elevatr`**: [Package Vignette](https://cran.r-project.org/web/packages/elevatr/vignettes/introduction_to_elevatr.html)
+* **`terra`**: [Package Documentation](https://rspatial.github.io/terra/reference/terra-package.html) | [GitHub Repository](https://github.com/rspatial/terra)
+* **`sf`**: [Package Documentation](https://r-spatial.github.io/sf/) | [GitHub Repository](https://github.com/r-spatial/sf)
+* **`tidyterra`**: [Package Documentation](https://dieghernan.github.io/tidyterra/index.html) | [GitHub Repository](https://github.com/dieghernan/tidyterra/)
+* Tutorial for working with [Google Earth Engine (GEE)](https://courses.spatialthoughts.com/end-to-end-gee.html)
+
+
+
+## 🧠 Behavioural State Estimation
+
+### Method and Time Step Comparison
+* Cullen et al. (2025) [Method selection and temporal scale greatly influence ecological inferences on estimated animal behavioral states](https://doi.org/10.1186/s40317-025-00434-0)
+
+### State-Space Models (SSMs)
+* Jonsen et al. (2005) [Robust state–space modeling of animal movement data](https://esajournals.onlinelibrary.wiley.com/doi/abs/10.1890/04-1852)
+* Patterson et al. (2008) [State–space models of individual animal movement](https://www.sciencedirect.com/science/article/pii/S0169534707003588)
+* Schick et al. (2008) [Understanding movement data and movement processes: current and emerging directions](https://www.whoi.edu/cms/files/Schick2008_UnderstandingMovementDataProcesses_53549.pdf)
+* Auger-Méthé et al. (2017) [Spatiotemporal modelling of marine movement data using Template Model Builder (TMB)](https://www.int-res.com/articles/meps2016/565/m565p237.pdf)
+* Eisaguirre et al. (2019) [Dynamic-Parameter Movement Models Reveal Drivers of Migratory Pace in a Soaring Bird](https://doi.org/10.3389/fevo.2019.00317)
+* Jonsen et al. (2020) [A continuous-time state-space model for rapid quality control of argos locations from animal-borne tags](https://movementecologyjournal.biomedcentral.com/articles/10.1186/s40462-020-00217-7)
+* Auger-Méthé et al. (2021) [A guide to state–space modeling of ecological time series](https://esajournals.onlinelibrary.wiley.com/doi/abs/10.1002/ecm.1470)
+* Jonsen et al. (2023) [`aniMotum`, an R package for animal movement data: Rapid quality control, behavioural estimation and simulation](https://besjournals.onlinelibrary.wiley.com/doi/full/10.1111/2041-210X.14060)
+
+### Hidden Markov Models (HMMs)
+* Morales et al. (2004) [Extracting more out of relocation data: building movement models as mixtures of random walks](https://esajournals.onlinelibrary.wiley.com/doi/abs/10.1890/03-0269)
+* Langrock et al. (2012) [Flexible and practical modeling of animal telemetry data: hidden Markov models and extensions](https://esajournals.onlinelibrary.wiley.com/doi/abs/10.1890/11-2241.1)
+* McClintock et al. (2012) [A general discrete‐time modeling framework for animal movement using multistate random walks](https://esajournals.onlinelibrary.wiley.com/doi/abs/10.1890/11-0326.1)
+* Pohle et al. (2017) [Selecting the number of states in hidden Markov models: pragmatic solutions illustrated using animal movement](https://link.springer.com/article/10.1007/s13253-017-0283-8)
+* Leos-Barajas et al. (2017) [Analysis of animal accelerometer data using hidden Markov models](https://doi.org/10.1111/2041-210X.12657)
+* McClintock and Michelot (2018) [`momentuHMM`: R package for generalized hidden Markov models of animal movement](https://besjournals.onlinelibrary.wiley.com/doi/abs/10.1111/2041-210X.12995)
+* Adam et al. (2019) [Joint modelling of multi-scale animal movement data using hierarchical hidden Markov models](https://doi.org/10.1111/2041-210X.13241)
+* McClintock et al. (2020) [Uncovering ecological state dynamics with hidden Markov models](https://onlinelibrary.wiley.com/doi/abs/10.1111/ele.13610)
+* Glennie et al. (2022) [Hidden Markov Models: Pitfalls and Opportunities in Ecology](https://besjournals.onlinelibrary.wiley.com/doi/abs/10.1111/2041-210X.13801)
+* Klappstein et al. (2023) [Flexible hidden Markov models for behaviour-dependent habitat selection](https://doi.org/10.1186/s40462-023-00392-3)
+* Dupont et al. (2025) [Improved order selection method for hidden Markov models: A case study with movement data](https://doi.org/10.1111/2041-210X.70025)
+* Michelot (2025) [hmmTMB: Hidden Markov Models with Flexible Covariate Effects in R](https://www.jstatsoft.org/article/view/v114i05)
+* Cisneros-Araujo et al. (2026) [A hidden Markov framework for joint identification of animal activity modes and movement phases](https://doi.org/10.1007/s10980-026-02304-3)
+
+### Non-Parametric & Mixed Membership Models
+* Cullen et al. (2022) [Identifying latent behavioural states in animal movement with M4, a nonparametric Bayesian method](https://besjournals.onlinelibrary.wiley.com/doi/abs/10.1111/2041-210X.13745)
+* Valle et al. (2022) [Automatic selection of the number of clusters using Bayesian clustering and sparsity-inducing priors](https://esajournals.onlinelibrary.wiley.com/doi/abs/10.1002/eap.2524)
+* Cullen et al. (2023) [Biologging as an important tool to uncover behaviors of cryptic species: an analysis of giant armadillos (*Priodontes maximus*)](https://peerj.com/articles/14726/)
+
+
+## 🗺️ Space-Use & Home Range
+
+### Classical Methods (MCP & Conventional KDE)
+* Worton (1989) [Kernel methods for estimating the utilization distribution in home‐range studies](https://esajournals.onlinelibrary.wiley.com/doi/pdf/10.2307/1938423)
+* Fieberg and Kochanny (2005) [Quantifying home‐range overlap: The importance of the utilization distribution](https://wildlife.onlinelibrary.wiley.com/doi/pdfdirect/10.2193/0022-541X%282005%2969%5B1346%3AQHOTIO%5D2.0.CO%3B2)
+* Fieberg (2007) [Kernel density estimators of home range: Smoothing and the autocorrelation red herring](https://esajournals.onlinelibrary.wiley.com/doi/full/10.1890/06-0930)
+* Nilsen et al. (2008) [Can minimum convex polygon home ranges be used to draw biologically meaningful conclusions?](https://link.springer.com/article/10.1007/s11284-007-0421-9)
+
+### Brownian Bridges  & Autocorrelated KDE (dBBMM & AKDE)
+* Horne et al. (2007) [Analyzing animal movements using Brownian bridges](https://esajournals.onlinelibrary.wiley.com/doi/full/10.1890/06-0957.1)
+* Kranstauber et al. (2012) [A dynamic Brownian bridge movement model to estimate utilization distributions for heterogeneous animal movement](https://besjournals.onlinelibrary.wiley.com/doi/abs/10.1111/j.1365-2656.2012.01955.x)
+* Fleming et al. (2015) [Rigorous home range estimation with movement data: a new autocorrelated kernel density estimator](https://esajournals.onlinelibrary.wiley.com/doi/abs/10.1890/14-2010.1)
+* Fleming and Calabrese (2017) [A new kernel density estimator for accurate home‐range and species‐range area estimation](https://besjournals.onlinelibrary.wiley.com/doi/abs/10.1111/2041-210X.12673)
+* Winner et al (2018) [Statistical inference for home range overlap](https://doi.org/10.1111/2041-210X.13027)
+* Noonan et al. (2019) [A comprehensive analysis of autocorrelation and bias in home range estimation](https://esajournals.onlinelibrary.wiley.com/doi/full/10.1002/ecm.1344)
+* Signer and Fieberg (2021) [A fresh look at an old concept: home-range estimation in a tidy world](https://peerj.com/articles/11031/)
+* Silva et al. (2022) [Autocorrelation-informed home range estimation: A review and practical guide](https://besjournals.onlinelibrary.wiley.com/doi/full/10.1111/2041-210X.13786)
+* Fleming et al. (2022) [Population-level inference for home-range areas](https://doi.org/10.1111/2041-210X.13815)
+* Anand et al. (2025) [Estimating population range distributions from animal tracking data](https://doi.org/10.1101/2025.09.02.673746)
+* Silva et al. (2026) [Too Few, Too Many, or Just Right? Optimizing Sample Sizes for Population-Level Inferences in Animal Tracking Projects](https://doi.org/10.1002/ece3.73755)
+* Alston et al. (2026) [Clarifying space use concepts in ecology: Range vs. occurrence distributions](https://doi.org/10.1002/ecy.70300)
+
+
+## 🌲 Habitat Selection & Step Selection (RSF / SSF / iSSF)
+
+### Comprehensive e-book
+Matthiopoulos, Fieberg, and Aarts (2023) [Species-Habitat Associations: Spatial data, predictive models, and ecological insights, 2nd Edition](https://shabook.netlify.app)
+
+### Foundational Papers & Recent Advances
+* Manly et al. (2002) *Resource Selection by Animals: Statistical Design and Analysis for Field Studies* (2nd ed.). Springer.
+* Boyce et al. (2002) [Evaluating resource selection functions](https://ecography.onlinelibrary.wiley.com/doi/abs/10.1034/j.1600-0587.2002.250303.x)
+* Rhodes et al. (2005) [Continuous-time movement models: an integrated framework for statistical inference on animal movement](https://esajournals.onlinelibrary.wiley.com/doi/abs/10.1890/04-0364)
+* Fortin et al. (2005) [Wolves influence elk movements: behavior shapes a trophic cascade in Yellowstone National Park](https://doi.org/10.1890/04-0953)
+* Thurfjell et al. (2014) [Applications of step-selection functions in ecology and conservation](https://link.springer.com/article/10.1007/s00442-014-2926-2)
+* Avgar et al. (2016) [Integrated step-selection analysis: bridging the gap between movement and habitat selection](https://besjournals.onlinelibrary.wiley.com/doi/full/10.1111/1365-2656.12528)
+* Wittemyer et al. (2019) [Behavioural valuation of landscapes using movement data](https://doi.org/10.1098/rstb.2018.0046)
+* Muff et al. (2020) [How to account for inter-individual variation when fitting resource selection functions](https://besjournals.onlinelibrary.wiley.com/doi/full/10.1111/1365-2656.13151)
+* Fieberg et al. (2021) [A ‘How to’ guide for interpreting parameters in habitat-selection analyses](https://besjournals.onlinelibrary.wiley.com/doi/full/10.1111/1365-2656.13441)
+* Klappstein et al. (2022) [Energy-based step selection analysis: Modelling the energetic drivers of animal movement and habitat use](https://doi.org/10.1111/1365-2656.13687)
+* Northrup et al. (2022) [Conceptual and methodological advances in habitat-selection modeling: guidelines for ecology and evolution](https://doi.org/10.1002/eap.2470)
+* Klappstein et al. (2024) [Step selection functions with non-linear and random effects](https://doi.org/10.1111/2041-210X.14367)
+* Chatterjee et al. (2024) [Modelling individual variability in habitat selection and movement using integrated step-selection analysis](https://doi.org/10.1111/2041-210X.14321)
+* Fieberg et al. (2024) [Using lineups to evaluate goodness of fit of animal movement models](https://doi.org/10.1111/2041-210X.14336)
+* Michelot et al. (2024) [Understanding step selection analysis through numerical integration](https://doi.org/10.1111/2041-210X.14248)
+* Signer et al. (2024) [Simulating animal space use from fitted integrated Step-Selection Functions (iSSF)](https://doi.org/10.1111/2041-210X.14263)
+* McClintock and Lander (2024) [A multistate Langevin diffusion for inferring behavior-specific habitat selection and utilization distributions](https://doi.org/10.1002/ecy.4186)
+* Forrest et al. (2025) [Predicting fine-scale distributions and emergent spatiotemporal patterns from temporally dynamic step selection simulations](https://doi.org/10.1111/ecog.07421)
+* Lambert et al. (2025) [Bridging the Gap Between Lagrangian and Eulerian Species Distribution Models for Abundance Estimation—A Simulation Experiment](https://doi.org/10.1111/jbi.15078)
+* Florko et al. (2025) [An introduction to statistical models used to characterize species-habitat associations with animal movement data](https://doi.org/10.1186/s40462-025-00549-2)
+
+
+## 🤖 Bayesian & Machine Learning Directions
+
+### Bayesian Spatial & Movement Inference
+* Hooten et al. (2017) *Animal Movement: Statistical Models for Telemetry Data*. CRC Press.
+* Bakka et al. (2018) [Spatial modeling with R-INLA: A review](https://www.sciencedirect.com/science/article/pii/S2211675318300305)
+* Bachl et al. (2019) [`inlabru`: an R package for Bayesian spatial modelling from ecological survey data](https://besjournals.onlinelibrary.wiley.com/doi/full/10.1111/2041-210X.13168)
+* Bürkner (2017) [`brms`: An R Package for Bayesian Multilevel Models Using Stan](https://www.jstatsoft.org/article/view/v080i01)
+* Gabry et al. (2019) [Visualization in Bayesian Workflow](https://doi.org/10.1111/rssa.12378) 
+* McShane et al. (2019) [Abandon Statistical Significance](https://doi.org/10.1080/00031305.2018.1527253)
+* Lemoine (2019) [Moving beyond noninformative priors: why and how to choose weakly informative priors in Bayesian analyses](https://doi.org/10.1111/oik.05985)
+* McElreath (2020) [Statistical rethinking: A Bayesian course with examples in R and STAN (2nd ed)](http://xcelab.net/rm/)
+* Wesner and Pomeranz (2021) [Choosing priors in Bayesian ecological models by simulating from the prior predictive distribution](https://doi.org/10.1002/ecs2.3739)
+* Gelman et al. (2026). [Statistical workflow](https://dx.doi.org/10.1098/rsta.2025.0293)
+
+### Machine Learning in Movement Ecology
+* Valetta et al. (2019) [Applications of machine learning in animal behaviour studies](https://sciencedirect.com/science/article/pii/S0003347219300350)
+* Ladds et al. (2017) [Supervised machine learning algorithms to classify behavioural states from accelerometer data](https://www.sciencedirect.com/science/article/pii/S030438001730032X)
+* Hirakawa et al. (2018) [Can AI predict animal movements? Filling gaps in animal trajectories using inverse reinforcement learning](https://doi.org/10.1002/ecs2.2447)
+* Maekawa et al. (2020) [Deep learning-assisted comparative analysis of animal trajectories with DeepHL](https://doi.org/10.1038/s41467-020-19105-0)
+* Tuia et al. (2022) [Perspectives in machine learning for wildlife conservation](https://www.nature.com/articles/s41467-022-29808-x)
+* Fronville et al. (2026) [Analyzing animal movement using deep learning](https://arxiv.org/abs/2603.24009)
+* Forrest et al. (2026) [Predicting animal movement with deepSSF: A deep learning step selection framework](https://doi.org/10.1111/2041-210x.70136)
+
+:::

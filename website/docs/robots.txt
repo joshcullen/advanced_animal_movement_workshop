@@ -1,1 +1,1 @@
-Sitemap: https://joshcullen.github.io/website/sitemap.xml
+Sitemap: https://joshcullen.github.io/advanced_animal_movement_workshop/sitemap.xml

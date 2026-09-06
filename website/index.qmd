@@ -10,7 +10,7 @@ A workshop developed by [Josh Cullen](https://joshcullen.github.io) in collabora
 
 <span class='code'>📆 &ensp;16–17 September 2026</span>\
 <span class='code'>⏰ &ensp;8:30 - 16:30</span>\
-<span class='code'>🏫 &ensp;Stellenbosch University, Merensky Bldg, NITheCS Seminar Room</span>\
+<span class='code'>🏫 &ensp;NITheCS Seminar Room, Merensky Bldg, Stellenbosch University</span>\
 
 ------------------------------------------------------------------------
 

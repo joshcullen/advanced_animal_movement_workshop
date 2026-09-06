@@ -8,6 +8,7 @@ library(rnaturalearth)
 library(sf)
 library(tictoc)
 library(amt)
+library(glmmTMB)
 
 source("R/utils.R")
 
@@ -184,6 +185,62 @@ ggplot(ssf_preds, aes(x = x_natural, y = rss)) +
   theme_minimal(base_size = 14) +
   theme(strip.placement = "outside", strip.text = element_text(face = "bold"))
 
+
+
+
+
+#############################
+### Fit Mixed-Effects SSF ###
+#############################
+
+#This example follows recommendations from Muff et al. (2020) "Accounting for individual-specific variation in habitat-selection studies: Efficient estimation of mixed-effects models using Bayesian or frequentist computation" (https://doi.org/10.1111/1365-2656.13087)
+
+# This example implements this hierarchical approach in {glmmTMB}, which will slightly differ from using INLA/inlabru or a purely Bayesian model
+
+# Now, let's account for inter-individual variability in these responses
+
+
+# Set up (but don't yet fit) model
+fit_ssf2.tmp <- glmmTMB(case_ ~ -1 + dist2pop_s + dist2water_s + ndvi_s +  #fixed effects
+                          (1|step_id_) + (0 + dist2pop_s|id) + (0 + dist2water_s|id) + (0 + ndvi_s|id),  #varying effects
+                        family = poisson, data = track_steps_covars, doFit = FALSE)
+
+# Fix SD of first random term (`(1|step_id_)`; varying intercept) to 1e3 (i.e., 1000), which corresponds to variance of 1e6
+#must be on log scale
+fit_ssf2.tmp$parameters$theta[1] <- log(1e3)
+
+# Tell glmmTMB to leave the first param "theta[1]" as fixed, but estimate all others
+fit_ssf2.tmp$mapArg <- list(theta = factor(c(NA, 1:3)))
+
+
+### Fit the hierarchical model ###
+tic()
+fit_ssf2 <- fitTMB(fit_ssf2.tmp)
+toc()  #took 23 sec
+
+summary(fit_ssf2)  #results are very similar to simpler model
+confint(fit_ssf2)
+
+
+# Viz estimated coeffs
+ssf_me_coefs <- confint(fit_ssf2)[1:3,] |> 
+  exp() |> 
+  data.frame() |> 
+  rename(estimate = Estimate,
+         conf.low = X2.5..,
+         conf.high = X97.5..) |> 
+  rownames_to_column("term")
+
+ggplot(ssf_me_coefs, aes(x = estimate, y = term)) +
+  geom_point(size = 3, color = "#2c7fb8") +
+  geom_errorbar(aes(xmin = conf.low, xmax = conf.high), width = 0.2) +
+  geom_vline(xintercept = 1, linetype = "dashed", color = "darkred") +
+  labs(
+    title = "Mixed-Effects SSF Parameter Estimates",
+    x = "Relative Selection Strength (RSS per 1 SD increase)",
+    y = NULL
+  ) +
+  theme_minimal(base_size = 14)
 
 
 

@@ -2,8 +2,106 @@
 title: "Troubleshooting computer problems"
 ---
 
+Installation issues during workshop setup typically stem from missing C++/Fortran toolchains, outdated spatial system libraries, or binary mismatches between R packages.
+
+::: {.callout-note}
+## 💡 Quick Diagnostic Steps
+1. **Update R and RStudio/Positron:** Ensure you are running **R >= 4.5.0**.
+2. **Restart R Console:** Always restart your R session (`Ctrl+Shift+F10` or `Cmd+Shift+0`) before retrying a failed package installation.
+3. **Try `{pak}` First:** If `install.packages()` or `remotes::install_github()` fails, try using `pak::pkg_install("pkgname")`. `{pak}` automatically resolves complex upstream system dependencies and binary builds.
+:::
+
+## Operating System Toolchains
+
+Packages like `aniMotum`, `momentuHMM`, and `ctmm` compile C++ or Fortran code locally during installation.
+
+### macOS (Apple Silicon M1–M5 & Intel)
+The most common macOS failure is a missing C++/Fortran compiler required by `TMB` or `Rcpp`. 
+
 Via `aniMotum`: 
+ > There can be issues getting compilers to work properly, especially on silicon chip [M1-M5] Macs. Often, this is due to missing or incorrect Xcode Command Line Tools and/or Fortran compiler. If you encounter install and compile issues, you may find a solution in the excellent documentation here [glmmTMB](https://github.com/glmmTMB/glmmTMB/wiki/macOS-Troubleshooting).
 
-> There can be issues getting compilers to work properly, especially on M1 Macs. Often, this is due to missing or incorrect Xcode Command Line Tools and/or Fortran compiler. If you encounter install and compile issues, you may find a solution in the excellent documentation here [glmmTMB](https://github.com/glmmTMB/glmmTMB).
+* **Missing Command Line Tools:** Run the following command in your macOS **Terminal** (not the R console):
+```bash
+xcode-select --install
+```
+* **Fortran Compiler Errors (`gfortran`):** If installation throws `lgfortran` or `quadmath` errors, install the appropriate `gfortran` binary for your macOS version and chip architecture from the [gfortran for macOS releases page](https://github.com/fxcoudert/gfortran-for-macOS/releases).
 
+### Windows
+* **Missing Rtools:** Windows requires **Rtools** to compile source packages. Download the version matching your installed R version from [CRAN Rtools](https://cran.r-project.org/bin/windows/Rtools/).
+* **PATH Verification:** Ensure Rtools is added to your system PATH during setup. Verify installation in R using:
+```r
+pkgbuild::has_build_tools(debug = TRUE)
+```
+
+## Package-Specific Issues
+
+::: {.callout-note}
+## Suggestion
+A good general rule of thumb is to refer to the package documentation, and especially the GitHub repo of a package (if available). There are lots of answered questions to problems you may encounter on the Issues page, or potentially the Discussions page (if available) of the repo.
+
+For a couple of these ([`ctmm`](https://groups.google.com/g/ctmm-user),[`inlabru`](https://groups.google.com/g/r-inla-discussion-group?pli=1)), there's an associated Google Group thread that serves as a living forum where users ask questions, which serves as another valuable resource for troubleshooting different problems.
+:::
+
+### `aniMotum` Installation
+If CRAN returns an older or non-functional binary version, force installation of the latest release from the official R-Universe repository:
+```r
+install.packages(
+  "aniMotum", 
+  repos = c("[https://ianjonsen.r-universe.dev](https://ianjonsen.r-universe.dev)", "[https://cloud.r-project.org](https://cloud.r-project.org)"),
+  dependencies = TRUE
+)
+```
 Another good resource for `aniMotum`-specific technical problems is the ['Issues'](https://github.com/ianjonsen/aniMotum/issues?q=is%3Aissue+is%3Aclosed) page of the GitHub repo. For more information on installing this package, please refer to the installation instructions from the README on the `aniMotum` [website](https://ianjonsen.github.io/aniMotum/).
+
+### TMB & Matrix Package Version Mismatches
+When updating R or installing `aniMotum` / `momentuHMM`, you may encounter an ABI mismatch error referencing `Matrix` or `TMB`:
+> `Error in checkMatrixPackageVersion(): Matrix version mismatch...`
+
+**Solution:** Force a reinstall of both `Matrix` and `TMB` from CRAN before reinstalling the dependent movement package:
+```r
+install.packages(c("Matrix", "TMB"), type = "source")
+```
+
+### `momentuHMM` C++ Compilation
+`momentuHMM` compiles custom C++ functions for hidden Markov model likelihood evaluation. If `remotes::install_github("bmcclintock/momentuHMM")` fails:
+1. Ensure `Rcpp` and `RcppArmadillo` are updated:
+```r
+install.packages(c("Rcpp", "RcppArmadillo", "optimx"))
+```
+2. Check closed issues on the [momentuHMM GitHub Issues page](https://github.com/bmcclintock/momentuHMM/issues?q=is%3Aissue%20state%3Aclosed).
+
+## Geospatial Dependencies (`sf`, `terra`, `rsi`)
+
+### GDAL, GEOS, and PROJ System Libraries
+Packages like `sf` and `terra` rely on external C++ spatial libraries (GDAL, GEOS, PROJ). 
+
+* **Windows & macOS:** Pre-compiled binaries on CRAN include embedded GDAL/PROJ binaries. If compilation fails when installing from source, force binary installation:
+```r
+install.packages(c("sf", "terra"), type = "binary")
+```
+* **Linux (Ubuntu/Debian):** System libraries must be installed via apt prior to installing R packages:
+```bash
+sudo apt install libgdal-dev libgeos-dev libproj-dev libssl-dev libunits-dev
+```
+
+### Cloud Data Streaming (VSI & STAC Connections)
+If spatial streaming fails or times out when using `rsi` or `terra` to pull cloud-optimized GeoTIFFs (COGs):
+1. **SSL / Curl Certificate Errors:** Ensure `curl` and `openssl` system packages are up-to-date.
+2. **GDAL Environment Variables:** Run the following snippet in R to ensure GDAL settings are properly configured for HTTP streaming:
+```r
+terra::setGDALconfig("GDAL_DISABLE_READDIR_ON_OPEN", "EMPTY_DIR")
+terra::setGDALconfig("VSI_CACHE", "TRUE")
+```
+
+## GitHub API Rate Limits
+
+When installing multiple packages directly from GitHub via `remotes::install_github()`, you may hit the unauthenticated GitHub API limit:
+> `HTTP 403 Forbidden: API rate limit exceeded`
+
+**Solutions:**
+* Switch to `{pak}` for installations, which manages API requests efficiently:
+```r
+pak::pkg_install("bmcclintock/momentuHMM")
+```
+* Alternatively, create a free **GitHub Personal Access Token (PAT)** using `usethis::create_github_token()` and store it in your R environment using `gitcreds::gitcreds_set()`.

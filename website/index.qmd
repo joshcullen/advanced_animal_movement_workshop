@@ -38,7 +38,7 @@ discussions using a real African wildlife telemetry dataset.
 ::: {layout-ncol=2}
 ![Probability of being in 'Transit' behavior based on fitted HMM](images/HMM_6469_PrTransit_promo.png)
 
-![Predicted UD based on iSSF compared to observed tracks](images/iSSF_pred_UD.png)
+![Predicted transient UD based on iSSF compared to observed tracks](images/iSSF_pred_UD.png)
 :::
 
 

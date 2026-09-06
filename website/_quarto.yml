@@ -50,9 +50,9 @@ website:
           - href: workshop-prep.qmd
             text: Preparing for Workshop
       - section: "Computing"
-        # contents:
-        #   - href: computing-troubleshooting.qmd
-        #     text: Troubleshooting
+        contents:
+          - href: computing-troubleshooting.qmd
+            text: Troubleshooting
 
 
 format:

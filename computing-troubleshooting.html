@@ -2,13 +2,16 @@
 <html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
 
 <meta charset="utf-8">
-<meta name="generator" content="quarto-1.9.9">
+<meta name="generator" content="quarto-1.9.37">
 
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 
 
 <title>Troubleshooting computer problems – Advanced Animal Movement Modelling Workshop</title>
 <style>
+/* Default styles provided by pandoc.
+** See https://pandoc.org/MANUAL.html#variables-for-html for config info.
+*/
 code{white-space: pre-wrap;}
 span.smallcaps{font-variant: small-caps;}
 div.columns{display: flex; gap: min(4vw, 1.5em);}
@@ -19,6 +22,41 @@ ul.task-list li input[type="checkbox"] {
   width: 0.8em;
   margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
   vertical-align: middle;
+}
+/* CSS for syntax highlighting */
+html { -webkit-text-size-adjust: 100%; }
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+  { counter-reset: source-line 0; }
+pre.numberSource code > span
+  { position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+  { content: counter(source-line);
+    position: relative; left: -1em; text-align: right; vertical-align: baseline;
+    border: none; display: inline-block;
+    -webkit-touch-callout: none; -webkit-user-select: none;
+    -khtml-user-select: none; -moz-user-select: none;
+    -ms-user-select: none; user-select: none;
+    padding: 0 4px; width: 4em;
+  }
+pre.numberSource { margin-left: 3em;  padding-left: 4px; }
+div.sourceCode
+  {   }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
 }
 </style>
 
@@ -33,19 +71,18 @@ ul.task-list li input[type="checkbox"] {
 <link href="site_libs/cookie-consent/cookie-consent.css" rel="stylesheet">
 <script src="site_libs/quarto-html/quarto.js" type="module"></script>
 <script src="site_libs/quarto-html/tabsets/tabsets.js" type="module"></script>
-<script src="site_libs/quarto-html/axe/axe-check.js" type="module"></script>
 <script src="site_libs/quarto-html/popper.min.js"></script>
 <script src="site_libs/quarto-html/tippy.umd.min.js"></script>
 <script src="site_libs/quarto-html/anchor.min.js"></script>
 <link href="site_libs/quarto-html/tippy.css" rel="stylesheet">
-<link href="site_libs/quarto-html/quarto-syntax-highlighting-5d254f1e278c2921d96b26102a150bb1.css" rel="stylesheet" class="quarto-color-scheme" id="quarto-text-highlighting-styles">
-<link href="site_libs/quarto-html/quarto-syntax-highlighting-dark-530b29c22fe67fc61ace1451aaa50055.css" rel="stylesheet" class="quarto-color-scheme quarto-color-alternate" id="quarto-text-highlighting-styles">
-<link href="site_libs/quarto-html/quarto-syntax-highlighting-5d254f1e278c2921d96b26102a150bb1.css" rel="stylesheet" class="quarto-color-scheme-extra" id="quarto-text-highlighting-styles">
+<link href="site_libs/quarto-html/quarto-syntax-highlighting-7f8f88aac4f3542376d5c11b86a4c14d.css" rel="stylesheet" class="quarto-color-scheme" id="quarto-text-highlighting-styles">
+<link href="site_libs/quarto-html/quarto-syntax-highlighting-dark-d0ae9245876894da5ac7e18953ecc5cc.css" rel="stylesheet" class="quarto-color-scheme quarto-color-alternate" id="quarto-text-highlighting-styles">
+<link href="site_libs/quarto-html/quarto-syntax-highlighting-7f8f88aac4f3542376d5c11b86a4c14d.css" rel="stylesheet" class="quarto-color-scheme-extra" id="quarto-text-highlighting-styles">
 <script src="site_libs/bootstrap/bootstrap.min.js"></script>
 <link href="site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
-<link href="site_libs/bootstrap/bootstrap-c8620d277ab85d1b26d341069a4f0e04.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme" id="quarto-bootstrap" data-mode="light">
-<link href="site_libs/bootstrap/bootstrap-dark-85e78b6a2f55821f203c3958df1f3da1.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme quarto-color-alternate" id="quarto-bootstrap" data-mode="dark">
-<link href="site_libs/bootstrap/bootstrap-c8620d277ab85d1b26d341069a4f0e04.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme-extra" id="quarto-bootstrap" data-mode="light">
+<link href="site_libs/bootstrap/bootstrap-4c6b800c0b29365fd100e1885ad86c78.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme" id="quarto-bootstrap" data-mode="light">
+<link href="site_libs/bootstrap/bootstrap-dark-bb8eefaf9987653784a242d0db694de2.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme quarto-color-alternate" id="quarto-bootstrap" data-mode="dark">
+<link href="site_libs/bootstrap/bootstrap-4c6b800c0b29365fd100e1885ad86c78.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme-extra" id="quarto-bootstrap" data-mode="light">
 <link href="site_libs/quarto-contrib/fontawesome6-6.7.2/all.min.css" rel="stylesheet">
 <link href="site_libs/quarto-contrib/fontawesome6-6.7.2/latex-fontsize.css" rel="stylesheet">
 <script id="quarto-search-options" type="application/json">{
@@ -268,9 +305,7 @@ cookieconsent.run({
       <button type="button" class="quarto-btn-toggle btn" data-bs-toggle="collapse" role="button" data-bs-target=".quarto-sidebar-collapse-item" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Toggle sidebar navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">
         <i class="bi bi-layout-text-sidebar-reverse"></i>
       </button>
-        <nav class="quarto-page-breadcrumbs" aria-label="breadcrumb"><ol class="breadcrumb"><li class="breadcrumb-item">
-      Advanced Animal Movement Modelling Workshop
-      </li></ol></nav>
+        <nav class="quarto-page-breadcrumbs" aria-label="breadcrumb"><ol class="breadcrumb"><li class="breadcrumb-item"><a href="./computing-troubleshooting.html">Computing</a></li><li class="breadcrumb-item"><a href="./computing-troubleshooting.html">Troubleshooting</a></li></ol></nav>
         <a class="flex-grow-1" role="navigation" data-bs-toggle="collapse" data-bs-target=".quarto-sidebar-collapse-item" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Toggle sidebar navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">      
         </a>
       <button type="button" class="btn quarto-search-button" aria-label="Search" onclick="window.quartoOpenSearch();">
@@ -341,22 +376,57 @@ cookieconsent.run({
       </ul>
   </li>
         <li class="sidebar-item sidebar-item-section">
-      <span class="sidebar-item-text sidebar-link text-start">
- <span class="menu-text">Computing</span></span>
+      <div class="sidebar-item-container"> 
+            <a class="sidebar-item-text sidebar-link text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-2" role="navigation" aria-expanded="true">
+ <span class="menu-text">Computing</span></a>
+          <a class="sidebar-item-toggle text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-2" role="navigation" aria-expanded="true" aria-label="Toggle section">
+            <i class="bi bi-chevron-right ms-2"></i>
+          </a> 
+      </div>
+      <ul id="quarto-sidebar-section-2" class="collapse list-unstyled sidebar-section depth1 show">  
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./computing-troubleshooting.html" class="sidebar-item-text sidebar-link active">
+ <span class="menu-text">Troubleshooting</span></a>
+  </div>
+</li>
+      </ul>
   </li>
     </ul>
     </div>
 </nav>
 <div id="quarto-sidebar-glass" class="quarto-sidebar-collapse-item" data-bs-toggle="collapse" data-bs-target=".quarto-sidebar-collapse-item"></div>
 <!-- margin-sidebar -->
-    <div id="quarto-margin-sidebar" class="sidebar margin-sidebar zindex-bottom">
-        
+    <div id="quarto-margin-sidebar" class="sidebar margin-sidebar">
+        <nav id="TOC" role="doc-toc" class="toc-active">
+    <h2 id="toc-title">On this page</h2>
+   
+  <ul>
+  <li><a href="#operating-system-toolchains" id="toc-operating-system-toolchains" class="nav-link active" data-scroll-target="#operating-system-toolchains">Operating System Toolchains</a>
+  <ul class="collapse">
+  <li><a href="#macos-apple-silicon-m1m5-intel" id="toc-macos-apple-silicon-m1m5-intel" class="nav-link" data-scroll-target="#macos-apple-silicon-m1m5-intel">macOS (Apple Silicon M1–M5 &amp; Intel)</a></li>
+  <li><a href="#windows" id="toc-windows" class="nav-link" data-scroll-target="#windows">Windows</a></li>
+  </ul></li>
+  <li><a href="#package-specific-issues" id="toc-package-specific-issues" class="nav-link" data-scroll-target="#package-specific-issues">Package-Specific Issues</a>
+  <ul class="collapse">
+  <li><a href="#animotum-installation" id="toc-animotum-installation" class="nav-link" data-scroll-target="#animotum-installation"><code>aniMotum</code> Installation</a></li>
+  <li><a href="#tmb-matrix-package-version-mismatches" id="toc-tmb-matrix-package-version-mismatches" class="nav-link" data-scroll-target="#tmb-matrix-package-version-mismatches">TMB &amp; Matrix Package Version Mismatches</a></li>
+  <li><a href="#momentuhmm-c-compilation" id="toc-momentuhmm-c-compilation" class="nav-link" data-scroll-target="#momentuhmm-c-compilation"><code>momentuHMM</code> C++ Compilation</a></li>
+  </ul></li>
+  <li><a href="#geospatial-dependencies-sf-terra-rsi" id="toc-geospatial-dependencies-sf-terra-rsi" class="nav-link" data-scroll-target="#geospatial-dependencies-sf-terra-rsi">Geospatial Dependencies (<code>sf</code>, <code>terra</code>, <code>rsi</code>)</a>
+  <ul class="collapse">
+  <li><a href="#gdal-geos-and-proj-system-libraries" id="toc-gdal-geos-and-proj-system-libraries" class="nav-link" data-scroll-target="#gdal-geos-and-proj-system-libraries">GDAL, GEOS, and PROJ System Libraries</a></li>
+  <li><a href="#cloud-data-streaming-vsi-stac-connections" id="toc-cloud-data-streaming-vsi-stac-connections" class="nav-link" data-scroll-target="#cloud-data-streaming-vsi-stac-connections">Cloud Data Streaming (VSI &amp; STAC Connections)</a></li>
+  </ul></li>
+  <li><a href="#github-api-rate-limits" id="toc-github-api-rate-limits" class="nav-link" data-scroll-target="#github-api-rate-limits">GitHub API Rate Limits</a></li>
+  </ul>
+</nav>
     </div>
 <!-- main -->
 <main class="content" id="quarto-document-content">
 
 
-<header id="title-block-header" class="quarto-title-block default">
+<header id="title-block-header" class="quarto-title-block default"><nav class="quarto-page-breadcrumbs quarto-title-breadcrumbs d-none d-lg-block" aria-label="breadcrumb"><ol class="breadcrumb"><li class="breadcrumb-item"><a href="./computing-troubleshooting.html">Computing</a></li><li class="breadcrumb-item"><a href="./computing-troubleshooting.html">Troubleshooting</a></li></ol></nav>
 <div class="quarto-title">
 <h1 class="title">Troubleshooting computer problems</h1>
 </div>
@@ -375,13 +445,121 @@ cookieconsent.run({
 </header>
 
 
-<p>Via <code>aniMotum</code>:</p>
-<blockquote class="blockquote">
-<p>There can be issues getting compilers to work properly, especially on M1 Macs. Often, this is due to missing or incorrect Xcode Command Line Tools and/or Fortran compiler. If you encounter install and compile issues, you may find a solution in the excellent documentation here <a href="https://github.com/glmmTMB/glmmTMB">glmmTMB</a>.</p>
-</blockquote>
+<p>Installation issues during workshop setup typically stem from missing C++/Fortran toolchains, outdated spatial system libraries, or binary mismatches between R packages.</p>
+<div class="callout callout-style-default callout-note callout-titled">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Note</span>💡 Quick Diagnostic Steps
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<ol type="1">
+<li><strong>Update R and RStudio/Positron:</strong> Ensure you are running <strong>R &gt;= 4.5.0</strong>.</li>
+<li><strong>Restart R Console:</strong> Always restart your R session (<code>Ctrl+Shift+F10</code> or <code>Cmd+Shift+0</code>) before retrying a failed package installation.</li>
+<li><strong>Try <code>{pak}</code> First:</strong> If <code>install.packages()</code> or <code>remotes::install_github()</code> fails, try using <code>pak::pkg_install("pkgname")</code>. <code>{pak}</code> automatically resolves complex upstream system dependencies and binary builds.</li>
+</ol>
+</div>
+</div>
+<section id="operating-system-toolchains" class="level2">
+<h2 class="anchored" data-anchor-id="operating-system-toolchains">Operating System Toolchains</h2>
+<p>Packages like <code>aniMotum</code>, <code>momentuHMM</code>, and <code>ctmm</code> compile C++ or Fortran code locally during installation.</p>
+<section id="macos-apple-silicon-m1m5-intel" class="level3">
+<h3 class="anchored" data-anchor-id="macos-apple-silicon-m1m5-intel">macOS (Apple Silicon M1–M5 &amp; Intel)</h3>
+<p>The most common macOS failure is a missing C++/Fortran compiler required by <code>TMB</code> or <code>Rcpp</code>.</p>
+<p>Via <code>aniMotum</code>: &gt; There can be issues getting compilers to work properly, especially on silicon chip [M1-M5] Macs. Often, this is due to missing or incorrect Xcode Command Line Tools and/or Fortran compiler. If you encounter install and compile issues, you may find a solution in the excellent documentation here <a href="https://github.com/glmmTMB/glmmTMB/wiki/macOS-Troubleshooting">glmmTMB</a>.</p>
+<ul>
+<li><strong>Missing Command Line Tools:</strong> Run the following command in your macOS <strong>Terminal</strong> (not the R console):</li>
+</ul>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb1"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="ex">xcode-select</span> <span class="at">--install</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<ul>
+<li><strong>Fortran Compiler Errors (<code>gfortran</code>):</strong> If installation throws <code>lgfortran</code> or <code>quadmath</code> errors, install the appropriate <code>gfortran</code> binary for your macOS version and chip architecture from the <a href="https://github.com/fxcoudert/gfortran-for-macOS/releases">gfortran for macOS releases page</a>.</li>
+</ul>
+</section>
+<section id="windows" class="level3">
+<h3 class="anchored" data-anchor-id="windows">Windows</h3>
+<ul>
+<li><strong>Missing Rtools:</strong> Windows requires <strong>Rtools</strong> to compile source packages. Download the version matching your installed R version from <a href="https://cran.r-project.org/bin/windows/Rtools/">CRAN Rtools</a>.</li>
+<li><strong>PATH Verification:</strong> Ensure Rtools is added to your system PATH during setup. Verify installation in R using:</li>
+</ul>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb2"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a>pkgbuild<span class="sc">::</span><span class="fu">has_build_tools</span>(<span class="at">debug =</span> <span class="cn">TRUE</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</section>
+</section>
+<section id="package-specific-issues" class="level2">
+<h2 class="anchored" data-anchor-id="package-specific-issues">Package-Specific Issues</h2>
+<div class="callout callout-style-default callout-note callout-titled">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Note</span>Suggestion
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>A good general rule of thumb is to refer to the package documentation, and especially the GitHub repo of a package (if available). There are lots of answered questions to problems you may encounter on the Issues page, or potentially the Discussions page (if available) of the repo.</p>
+<p>For a couple of these (<a href="https://groups.google.com/g/ctmm-user"><code>ctmm</code></a>,<a href="https://groups.google.com/g/r-inla-discussion-group?pli=1"><code>inlabru</code></a>), there’s an associated Google Group thread that serves as a living forum where users ask questions, which serves as another valuable resource for troubleshooting different problems.</p>
+</div>
+</div>
+<section id="animotum-installation" class="level3">
+<h3 class="anchored" data-anchor-id="animotum-installation"><code>aniMotum</code> Installation</h3>
+<p>If CRAN returns an older or non-functional binary version, force installation of the latest release from the official R-Universe repository:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb3"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="fu">install.packages</span>(</span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a>  <span class="st">"aniMotum"</span>, </span>
+<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a>  <span class="at">repos =</span> <span class="fu">c</span>(<span class="st">"[https://ianjonsen.r-universe.dev](https://ianjonsen.r-universe.dev)"</span>, <span class="st">"[https://cloud.r-project.org](https://cloud.r-project.org)"</span>),</span>
+<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a>  <span class="at">dependencies =</span> <span class="cn">TRUE</span></span>
+<span id="cb3-5"><a href="#cb3-5" aria-hidden="true" tabindex="-1"></a>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p>Another good resource for <code>aniMotum</code>-specific technical problems is the <a href="https://github.com/ianjonsen/aniMotum/issues?q=is%3Aissue+is%3Aclosed">‘Issues’</a> page of the GitHub repo. For more information on installing this package, please refer to the installation instructions from the README on the <code>aniMotum</code> <a href="https://ianjonsen.github.io/aniMotum/">website</a>.</p>
+</section>
+<section id="tmb-matrix-package-version-mismatches" class="level3">
+<h3 class="anchored" data-anchor-id="tmb-matrix-package-version-mismatches">TMB &amp; Matrix Package Version Mismatches</h3>
+<p>When updating R or installing <code>aniMotum</code> / <code>momentuHMM</code>, you may encounter an ABI mismatch error referencing <code>Matrix</code> or <code>TMB</code>: &gt; <code>Error in checkMatrixPackageVersion(): Matrix version mismatch...</code></p>
+<p><strong>Solution:</strong> Force a reinstall of both <code>Matrix</code> and <code>TMB</code> from CRAN before reinstalling the dependent movement package:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb4"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="fu">install.packages</span>(<span class="fu">c</span>(<span class="st">"Matrix"</span>, <span class="st">"TMB"</span>), <span class="at">type =</span> <span class="st">"source"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</section>
+<section id="momentuhmm-c-compilation" class="level3">
+<h3 class="anchored" data-anchor-id="momentuhmm-c-compilation"><code>momentuHMM</code> C++ Compilation</h3>
+<p><code>momentuHMM</code> compiles custom C++ functions for hidden Markov model likelihood evaluation. If <code>remotes::install_github("bmcclintock/momentuHMM")</code> fails: 1. Ensure <code>Rcpp</code> and <code>RcppArmadillo</code> are updated:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb5"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="fu">install.packages</span>(<span class="fu">c</span>(<span class="st">"Rcpp"</span>, <span class="st">"RcppArmadillo"</span>, <span class="st">"optimx"</span>))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<ol start="2" type="1">
+<li>Check closed issues on the <a href="https://github.com/bmcclintock/momentuHMM/issues?q=is%3Aissue%20state%3Aclosed">momentuHMM GitHub Issues page</a>.</li>
+</ol>
+</section>
+</section>
+<section id="geospatial-dependencies-sf-terra-rsi" class="level2">
+<h2 class="anchored" data-anchor-id="geospatial-dependencies-sf-terra-rsi">Geospatial Dependencies (<code>sf</code>, <code>terra</code>, <code>rsi</code>)</h2>
+<section id="gdal-geos-and-proj-system-libraries" class="level3">
+<h3 class="anchored" data-anchor-id="gdal-geos-and-proj-system-libraries">GDAL, GEOS, and PROJ System Libraries</h3>
+<p>Packages like <code>sf</code> and <code>terra</code> rely on external C++ spatial libraries (GDAL, GEOS, PROJ).</p>
+<ul>
+<li><strong>Windows &amp; macOS:</strong> Pre-compiled binaries on CRAN include embedded GDAL/PROJ binaries. If compilation fails when installing from source, force binary installation:</li>
+</ul>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb6"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a><span class="fu">install.packages</span>(<span class="fu">c</span>(<span class="st">"sf"</span>, <span class="st">"terra"</span>), <span class="at">type =</span> <span class="st">"binary"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<ul>
+<li><strong>Linux (Ubuntu/Debian):</strong> System libraries must be installed via apt prior to installing R packages:</li>
+</ul>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb7"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> apt install libgdal-dev libgeos-dev libproj-dev libssl-dev libunits-dev</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</section>
+<section id="cloud-data-streaming-vsi-stac-connections" class="level3">
+<h3 class="anchored" data-anchor-id="cloud-data-streaming-vsi-stac-connections">Cloud Data Streaming (VSI &amp; STAC Connections)</h3>
+<p>If spatial streaming fails or times out when using <code>rsi</code> or <code>terra</code> to pull cloud-optimized GeoTIFFs (COGs): 1. <strong>SSL / Curl Certificate Errors:</strong> Ensure <code>curl</code> and <code>openssl</code> system packages are up-to-date. 2. <strong>GDAL Environment Variables:</strong> Run the following snippet in R to ensure GDAL settings are properly configured for HTTP streaming:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb8"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a>terra<span class="sc">::</span><span class="fu">setGDALconfig</span>(<span class="st">"GDAL_DISABLE_READDIR_ON_OPEN"</span>, <span class="st">"EMPTY_DIR"</span>)</span>
+<span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a>terra<span class="sc">::</span><span class="fu">setGDALconfig</span>(<span class="st">"VSI_CACHE"</span>, <span class="st">"TRUE"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</section>
+</section>
+<section id="github-api-rate-limits" class="level2">
+<h2 class="anchored" data-anchor-id="github-api-rate-limits">GitHub API Rate Limits</h2>
+<p>When installing multiple packages directly from GitHub via <code>remotes::install_github()</code>, you may hit the unauthenticated GitHub API limit: &gt; <code>HTTP 403 Forbidden: API rate limit exceeded</code></p>
+<p><strong>Solutions:</strong> * Switch to <code>{pak}</code> for installations, which manages API requests efficiently:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb9"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a>pak<span class="sc">::</span><span class="fu">pkg_install</span>(<span class="st">"bmcclintock/momentuHMM"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<ul>
+<li>Alternatively, create a free <strong>GitHub Personal Access Token (PAT)</strong> using <code>usethis::create_github_token()</code> and store it in your R environment using <code>gitcreds::gitcreds_set()</code>.</li>
+</ul>
 
 
+</section>
 
 </main> <!-- /main -->
 <script id="quarto-html-after-body" type="application/javascript">

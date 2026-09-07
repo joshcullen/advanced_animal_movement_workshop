@@ -823,3 +823,44 @@ predict_gam_rsf <- function(model, data, type = "all") {
   }
 }
 
+
+#-----------------------------
+
+# Generate predictions of marginal effects from inlabru model
+get_inla_margeff <- function(var_name, fit, dat_orig, n_seq = 100) {
+  raw_var <- sub("_s$", "", var_name)
+  
+  # Extract observed range of the standardized covariate
+  s_min <- min(dat_orig[[var_name]], na.rm = TRUE)
+  s_max <- max(dat_orig[[var_name]], na.rm = TRUE)
+  seq_vals <- seq(s_min, s_max, length.out = n_seq)
+  
+  # Unscale parameters
+  var_mean <- mean(dat_orig[[raw_var]], na.rm = TRUE)
+  var_sd   <- sd(dat_orig[[raw_var]], na.rm = TRUE)
+  
+  # Build prediction grid (target covariate varies within observed bounds; others held at 0)
+  pred_grid <- tibble(
+    dist2pop_s   = 0,
+    dist2water_s = 0,
+    ndvi_s       = 0
+  ) |> 
+    slice(rep(1, n_seq))
+  
+  pred_grid[[var_name]] <- seq_vals
+  
+  # Predict RSS: exp(X * beta) omitting Intercept
+  preds <- predict(
+    fit,
+    newdata = pred_grid,
+    formula = ~ exp(dist2pop_s + dist2water_s + ndvi_s)
+  )
+  
+  # Combine with unscaled x-values
+  preds |> 
+    mutate(
+      covariate = raw_var,
+      x_natural = (seq_vals * var_sd) + var_mean
+    )
+}
+

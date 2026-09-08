@@ -18,7 +18,7 @@ library(exactextractr)
 ###################
 
 # Load tracks
-dat <- read_csv("processed_data/cleaned_tracks.csv")
+dat <- read_csv("processed_data/Session_1/cleaned_tracks.csv")
 
 glimpse(dat)
 summary(dat)

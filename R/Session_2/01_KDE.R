@@ -15,7 +15,7 @@ library(units)
 #### Load data ####
 ###################
 
-dat <- read_csv('processed_data/cleaned_tracks.csv') |> 
+dat <- read_csv('processed_data/Session_1/cleaned_tracks.csv') |> 
   mutate(id = as.character(id))  #convert to char. to fix potential handling problems
 
 glimpse(dat)
@@ -378,4 +378,4 @@ for (i in seq_along(dat_id_kde_href)) {
 #### Export datasets for easy loading ####
 ##########################################
 
-save(dat_id_kde_href2, dat_id_kde_hpi2, file = "processed_data/KDE_fits.RData")
+save(dat_id_kde_href2, dat_id_kde_hpi2, file = "processed_data/Session_2/KDE_fits.RData")

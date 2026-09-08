@@ -17,7 +17,7 @@ source("R/utils.R")
 ###################
 
 # Load tracks
-dat <- read_csv("processed_data/cleaned_tracks.csv") |> 
+dat <- read_csv("processed_data/Session_1/cleaned_tracks.csv") |> 
   mutate(id = as.character(id),
          obs = 1)  #denotes "used" habitat for model
 

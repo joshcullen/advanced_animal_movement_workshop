@@ -18,7 +18,7 @@ source("R/utils.R")  #load in custom functions
 #### Load data ####
 ###################
 
-dat <- read_csv('processed_data/cleaned_tracks.csv')
+dat <- read_csv('processed_data/Session_1/cleaned_tracks.csv')
 
 glimpse(dat)
 summary(dat)
@@ -662,7 +662,7 @@ ctmmweb::app(dat.telem2)
 #### Export datasets for easy loading ####
 ##########################################
 
-save(akde, file = "processed_data/AKDE_fits.RData")  #fitted AKDE
-save(akde_sf, file = "processed_data/AKDE_contours.RData")  #contours
-save(ctmm_fit_best, file = "processed_data/CTMM_fits.RData")  #fitted CTMMs
-save(pkde, file = "processed_data/PKDE_fits.RData")  #fitted PKDE
+save(akde, file = "processed_data/Session_2/AKDE_fits.RData")  #fitted AKDE
+save(akde_sf, file = "processed_data/Session_2/AKDE_contours.RData")  #contours
+save(ctmm_fit_best, file = "processed_data/Session_2/CTMM_fits.RData")  #fitted CTMMs
+save(pkde, file = "processed_data/Session_2/PKDE_fits.RData")  #fitted PKDE

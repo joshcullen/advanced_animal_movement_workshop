@@ -15,7 +15,7 @@ source("R/utils.R")  #load in custom functions
 #### Load data ####
 ###################
 
-dat <- read_csv('processed_data/cleaned_tracks.csv')
+dat <- read_csv('processed_data/Session_1/cleaned_tracks.csv')
 
 glimpse(dat)
 summary(dat)
@@ -255,4 +255,4 @@ for (i in 1:nrow(NPs)) {
 #### Export datasets for easy loading ####
 ##########################################
 
-save(contours2, file = "processed_data/dBBMM_fits.RData")
+save(contours2, file = "processed_data/Session_2/dBBMM_fits.RData")

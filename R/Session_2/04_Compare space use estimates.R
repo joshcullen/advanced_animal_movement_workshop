@@ -18,16 +18,16 @@ source("R/utils.R")
 
 #### Load the model results from each method ####
 
-load("processed_data/KDE_fits.RData")
-load("processed_data/dBBMM_fits.RData")
-load("processed_data/AKDE_contours.RData")
+load("processed_data/Session_2/KDE_fits.RData")
+load("processed_data/Session_2/dBBMM_fits.RData")
+load("processed_data/Session_2/AKDE_contours.RData")
 
 # Change object to more informative names
 kde_href <- dat_id_kde_href2; rm(dat_id_kde_href2)
 kde_hpi <- dat_id_kde_hpi2; rm(dat_id_kde_hpi2)
 dbbmm <- contours2; rm(contours2)
 
-dat <- read_csv('processed_data/cleaned_tracks.csv') |> 
+dat <- read_csv('processed_data/Session_1/cleaned_tracks.csv') |> 
   mutate(id = as.character(id)) |>  #convert to char. to fix potential handling problems
   add_trans_coords(coords = c('lon','lat'), proj = 4326, new_proj = 32736)
 

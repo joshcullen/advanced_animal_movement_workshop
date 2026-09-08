@@ -18,7 +18,7 @@ source("R/utils.R")
 #### Load data ####
 ###################
 
-dat <- read_csv('processed_data/cleaned_tracks.csv') |> 
+dat <- read_csv('processed_data/Session_1/cleaned_tracks.csv') |> 
   arrange(id, date) |>  #make sure data is properly sorted
   mutate(id = as.character(id))  #IDs are better handled as 'character'
 

@@ -25,7 +25,7 @@ rstan_options(auto_write = TRUE)
 #################
 
 # Load tracks
-dat <- read_csv('processed_data/cleaned_tracks.csv')
+dat <- read_csv('processed_data/Session_1/cleaned_tracks.csv')
 
 # Add project coords and calc displacement per ID
 dat <- dat |> 
@@ -44,7 +44,7 @@ gl_pa <- st_read("raw_data/gltfca_protectedAreasDetailed.shp")
 
 # Load AKDE contours (from segmented tracks)
 #Note: since these tracks were segmented relatively subjectively, we may want to be cautious when interpreting the results
-load("processed_data/AKDE_contours.RData")
+load("processed_data/Session_2/AKDE_contours.RData")
 
 
 # Load in environmental rasters

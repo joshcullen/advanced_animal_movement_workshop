@@ -200,4 +200,4 @@ dat3 |>
 #### Export cleaned data ####
 #############################
 
-write_csv(dat3, "processed_data/cleaned_tracks.csv")
+write_csv(dat3, "processed_data/Session_1/cleaned_tracks.csv")

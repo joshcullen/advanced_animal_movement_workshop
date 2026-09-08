@@ -49,7 +49,11 @@ cran_pkgs <- c(
   "rsi", "rstac", "osmdata", "elevatr",
   
   # Session 5: Species-Habitat Associations & SSFs
-  "lwgeom", "mgcv", "gratia"
+  "lwgeom", "mgcv", "gratia",
+  
+  # Session 6: Bayesian Modelling
+  "brms", "rstan", "bayesplot", "tidybayes", "inlabru", "fmesher",
+  "patchwork"
 )
 
 # Install missing CRAN packages
@@ -79,9 +83,13 @@ install.packages(
 message("Installing momentuHMM (v2.0.0) from GitHub...")
 remotes::install_github("bmcclintock/momentuHMM", dependencies = TRUE)
 
+# INLA (special repo)
+message("Installing latest stable version of INLA...")
+install.packages("INLA", repos=c(getOption("repos"), INLA="https://inla.r-inla-download.org/R/stable"), dep=TRUE)
+
 # 4. Verification Check
 message("\n--- Installation Verification ---")
-all_pkgs <- c(cran_pkgs, "rnaturalearthhires", "aniMotum", "momentuHMM")
+all_pkgs <- c(cran_pkgs, "rnaturalearthhires", "aniMotum", "momentuHMM", "INLA)
 installed <- all_pkgs %in% installed.packages()[, "Package"]
 
 if (all(installed)) {

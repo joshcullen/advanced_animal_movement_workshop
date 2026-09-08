@@ -37,7 +37,7 @@ This page outlines the schedule for the two-day **Advanced Animal Movement Model
 
 | Time | Session & Details |
 | :--- | :--- |
-| **08:30 – 10:00** | **Session 4: Environmental Data Access and Extraction** <br> • Remote sensing products (LULC, NDVI, temperature, dynamic water)<br> • Local geoprocessing and cloud workflows via Google Earth Engine<br> • Environmental annotation of movement tracks<br> • *Hands-on coding:* Download/process remote-sensing data & extract time-matched layers |
+| **08:30 – 10:00** | **Session 4: Environmental Data Access and Extraction** <br> • Remote sensing products (LULC, NDVI, temperature, dynamic water)<br> • Local geoprocessing and cloud workflows<br> • Environmental annotation of movement tracks<br> • *Hands-on coding:* Download/process remote-sensing data & extract time-matched layers |
 | **10:00 – 10:15** | ☕ **Tea Break** |
 | **10:15 – 12:45** | **Session 5: Species-Habitat Associations** <br> • Resource selection functions (RSFs), step selection functions (SSFs), and iSSFs<br> • Scale dependence & state-specific habitat selection<br> • *Hands-on coding:* Fit RSF, SSF, and iSSF models; interpret results, generate spatial predictions, and compare inferences |
 | **12:45 – 13:45** | 🥪 **Lunch Break** |

@@ -48,7 +48,7 @@ This page contains links to all lecture slides, R coding scripts, and video reco
 | • Bayesian workflows, `brms`, Stan, and INLA/inlabru | [{{< fa file-pdf >}} Slides][s6-slides] | — | [{{< fa video >}} Watch][s6-vid1] |
 | • Hands-on: Hierarchical & spatial RSFs using `inlabru` | — | [{{< fa code >}} Script][s6-code] | [{{< fa video >}} Watch][s6-vid2] |
 | **Session 7: Machine Learning & Emerging Directions** | | | |
-| • ML state classification, Random Forests & deep learning | [{{< fa file-pdf >}} Slides][s7-slides] | [{{< fa code >}} Script][s7-code] | [{{< fa video >}} Watch][s7-vid1] |
+| • ML state classification, Random Forests & deep learning | [{{< fa file-pdf >}} Slides][s7-slides] | — | — |
 
 :::
 

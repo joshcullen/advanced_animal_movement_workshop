@@ -40,6 +40,7 @@ This page provides links to official package documentation and software reposito
 * **[Source Cooperative](https://source.coop)**: Source is a nonprofit data publishing utility built on commodity cloud object storage. Researchers publish data at any scale without running servers, building portals, or writing APIs. Data are available in multiple formats.
 * **[NASA Earthdata](https://www.earthdata.nasa.gov)**: Provides large suite of data products from related NASA satellite missions and tools to view and download these data. [AppEEARS](https://www.earthdata.nasa.gov/data/tools/appeears) offers a simple and efficient way to perform data access and transformation processes.
 * **[Microsoft Planetary Computer](https://planetarycomputer.microsoft.com/catalog)**: Provides large catalog of multi-petabyte Earth observation data from a wide variety of products. Provides nice data viewer and data are readily available from their STAC catalog.
+* **[Digital Earth Africa](https://digitalearthafrica.org/en_za/)**: Processes openly accessible and freely available data to produce decision-ready products to address key challenges across the continent. Also provides a learning platform for accessing, exploring, and analyzing their data products in Python.
 
 ### Political & Administrative Boundaries
 * **Natural Earth Data**: Global country and state/province boundary vectors. Accessed via [`rnaturalearth`](https://docs.ropensci.org/rnaturalearth/).
@@ -47,6 +48,7 @@ This page provides links to official package documentation and software reposito
 
 ### Water Extent & Recurrence
 * **JRC Global Surface Water**: Global surface water products from the European Commission Joint Research Centre, based on Landsat 5, 7, and 8 imagery. Layers in this collection describe the occurrence, change, and seasonality of surface water from 1984-2021. Data available via [STAC catalog](https://stacindex.org/catalogs/microsoft-pc#/KCpHBnCmvPk3xPMWEuimTf96BY?t=3) and [Google Earth Engine](https://developers.google.com/earth-engine/datasets/catalog/JRC_GSW1_4_GlobalSurfaceWater?hl=en#description).
+* **Water Observations from Space (WOfS)**: African surface water products from the Digital Earth Africa, based on Landsat imagery (30 m). Layers in this collection describe the date-specific, annual summary, and all-time summary of surface water extent from 1984-present. [Data available](https://docs.digitalearthafrica.org/en/latest/data_specs/Landsat_WOfS_specs.html#id13) via AWS S3 bucket, OGC Web Services, and ODC API.
 
 ### Elevation & Topography
 * **AWS Terrain Tiles / USGS DEM**: Global digital elevation models accessed at varying zoom levels via [`elevatr`](https://github.com/jhollist/elevatr). Derived metrics (slope, aspect, terrain ruggedness index [TRI]) calculated using [`terra::terrain()`](https://rspatial.github.io/terra/reference/terrain.html).
@@ -130,8 +132,9 @@ This page provides links to official package documentation and software reposito
 
 ## 🌲 Resource & Step Selection (RSF / SSF / iSSF)
 
-### Comprehensive e-book
-Matthiopoulos, Fieberg, and Aarts (2023) [Species-Habitat Associations: Spatial data, predictive models, and ecological insights, 2nd Edition](https://shabook.netlify.app)
+### Comprehensive resources
+* Matthiopoulos, Fieberg, and Aarts (2023) [Species-Habitat Associations: Spatial data, predictive models, and ecological insights, 2nd Edition](https://shabook.netlify.app)
+* Gerber et al. (2025) [A plain language review and guidance for modeling animal habitat-selection](https://bgerber123.github.io/hsfguide/)
 
 ### Foundational Papers & Recent Advances
 * Manly et al. (2002) *Resource Selection by Animals: Statistical Design and Analysis for Field Studies* (2nd ed.). Springer.
@@ -178,5 +181,6 @@ Matthiopoulos, Fieberg, and Aarts (2023) [Species-Habitat Associations: Spatial 
 * Tuia et al. (2022) [Perspectives in machine learning for wildlife conservation](https://www.nature.com/articles/s41467-022-29808-x)
 * Fronville et al. (2026) [Analyzing animal movement using deep learning](https://arxiv.org/abs/2603.24009)
 * Forrest et al. (2026) [Predicting animal movement with deepSSF: A deep learning step selection framework](https://doi.org/10.1111/2041-210x.70136)
+* Agarwal et al. (2026) [Leveraging machine learning and accelerometry to classify animal behaviours with uncertainty](https://doi.org/10.1111/2041-210x.70206)
 
 :::

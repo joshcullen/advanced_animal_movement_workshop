@@ -7,10 +7,10 @@ website:
   site-url: "https://joshcullen.github.io/advanced_animal_movement_workshop/"
   repo-url: "https://github.com/joshcullen/advanced_animal_movement_workshop"
   repo-subdir: website
-  # google-analytics:
-    # tracking-id: "G-R5TYR42Z4J"
-    # anonymize-ip: true
-    # storage: cookies
+  google-analytics:
+    tracking-id: "G-0DERJBQRLR"
+    anonymize-ip: true
+    storage: cookies
   cookie-consent:
     type: implied
     style: simple

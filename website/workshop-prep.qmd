@@ -46,7 +46,7 @@ cran_pkgs <- c(
   "glmmTMB",
   
   # Session 4: Remote Sensing & Earth Observation
-  "rsi", "rstac", "osmdata", "elevatr",
+  "rsi", "rstac", "osmdata", "elevatr", "ndcf4",
   
   # Session 5: Species-Habitat Associations & SSFs
   "lwgeom", "mgcv", "gratia",

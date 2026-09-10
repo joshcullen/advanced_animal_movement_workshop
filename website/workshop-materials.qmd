@@ -23,14 +23,14 @@ This page contains links to all lecture slides, R coding scripts, and video reco
 | Topic / Activity | Slides | R Code | Video |
 | :--- | :---: | :---: | :---: |
 | **Session 1: Foundations of Movement Ecology** | | | |
-| • Movement paradigm, telemetry systems & sampling design | [{{< fa file-pdf >}} Slides][s1-slides] | — | [{{< fa video >}} Watch][s1-vid1] |
-| • Hands-on: Track exploration, cleaning & processing | — | [{{< fa code >}} Script][s1-code] | [{{< fa video >}} Watch][s1-vid2] |
+| • Movement paradigm, telemetry systems & sampling design | {{< fa file-pdf >}} Slides | — | {{< fa video >}} Watch |
+| • Hands-on: Track exploration, cleaning & processing | — | [{{< fa code >}} Script][s1-code] | {{< fa video >}} Watch |
 | **Session 2: Space Use Estimation** | | | |
-| • UDs, range distributions, KDE, dBBMM & AKDE theory | [{{< fa file-pdf >}} Slides][s2-slides] | — | [{{< fa video >}} Watch][s2-vid1] |
-| • Hands-on: Individual & population space use in `amt` / `ctmm` | — | [{{< fa code >}} Script][s2-code] | [{{< fa video >}} Watch][s2-vid2] |
+| • UDs, range distributions, KDE, dBBMM & AKDE theory | {{< fa file-pdf >}} Slides | — | {{< fa video >}} Watch |
+| • Hands-on: Individual & population space use in `amt` / `ctmm` | — | [{{< fa code >}} Script][s2-code] | {{< fa video >}} Watch |
 | **Session 3: Behavioural State Modelling** | | | |
-| • State-space models (SSMs) & hidden Markov models (HMMs) | [{{< fa file-pdf >}} Slides][s3-slides] | — | [{{< fa video >}} Watch][s3-vid1] |
-| • Hands-on: Fit SSMs (`aniMotum`) & HMMs (`momentuHMM`) | — | [{{< fa code >}} Script][s3-code] | [{{< fa video >}} Watch][s3-vid2] |
+| • State-space models (SSMs) & hidden Markov models (HMMs) | {{< fa file-pdf >}} Slides | — | {{< fa video >}} Watch |
+| • Hands-on: Fit SSMs (`aniMotum`) & HMMs (`momentuHMM`) | — | [{{< fa code >}} Script][s3-code] | {{< fa video >}} Watch |
 
 ## **Day 2:** 17 Sept 2026
 
@@ -39,16 +39,16 @@ This page contains links to all lecture slides, R coding scripts, and video reco
 | Topic / Activity | Slides | R Code | Video |
 | :--- | :---: | :---: | :---: |
 | **Session 4: Environmental Data Access & Extraction** | | | |
-| • Remote sensing, GEE & time-matched track annotation | [{{< fa file-pdf >}} Slides][s4-slides] | — | [{{< fa video >}} Watch][s4-vid1] |
-| • Hands-on: Extract environmental covariates (`terra` / GEE) | — | [{{< fa code >}} Script][s4-code] | [{{< fa video >}} Watch][s4-vid2] |
+| • Remote sensing, GEE & time-matched track annotation | {{< fa file-pdf >}} Slides | — | {{< fa video >}} Watch |
+| • Hands-on: Extract environmental covariates (`terra` / GEE) | — | [{{< fa code >}} Script][s4-code] | {{< fa video >}} Watch |
 | **Session 5: Species-Habitat Associations** | | | |
-| • Theory of RSFs, SSFs, and integrated SSFs (iSSFs) | [{{< fa file-pdf >}} Slides][s5-slides] | — | [{{< fa video >}} Watch][s5-vid1] |
-| • Hands-on: Fit RSF/SSF/iSSF models in `amt` & `glmmTMB` | — | [{{< fa code >}} Script][s5-code] | [{{< fa video >}} Watch][s5-vid2] |
+| • Theory of RSFs, SSFs, and integrated SSFs (iSSFs) | {{< fa file-pdf >}} Slides | — | {{< fa video >}} Watch |
+| • Hands-on: Fit RSF/SSF/iSSF models in `amt` & `glmmTMB` | — | [{{< fa code >}} Script][s5-code] | {{< fa video >}} Watch |
 | **Session 6: Bayesian Modelling for Inference** | | | |
-| • Bayesian workflows, `brms`, Stan, and INLA/inlabru | [{{< fa file-pdf >}} Slides][s6-slides] | — | [{{< fa video >}} Watch][s6-vid1] |
-| • Hands-on: Hierarchical & spatial RSFs using `inlabru` | — | [{{< fa code >}} Script][s6-code] | [{{< fa video >}} Watch][s6-vid2] |
+| • Bayesian workflows, `brms`, Stan, and INLA/inlabru | {{< fa file-pdf >}} Slides | — | {{< fa video >}} Watch |
+| • Hands-on: Hierarchical & spatial RSFs using `inlabru` | — | [{{< fa code >}} Script][s6-code] | {{< fa video >}} Watch |
 | **Session 7: Machine Learning & Emerging Directions** | | | |
-| • ML state classification, Random Forests & deep learning | [{{< fa file-pdf >}} Slides][s7-slides] | — | — |
+| • ML state classification, Random Forests & deep learning | {{< fa file-pdf >}} Slides | — | {{< fa video >}} Watch |
 
 :::
 
@@ -58,35 +58,34 @@ This page contains links to all lecture slides, R coding scripts, and video reco
 <!-- ======================================================================= -->
 
 [s1-slides]: #
-[s1-code]:   #
+[s1-code]:   https://github.com/joshcullen/advanced_animal_movement_workshop/tree/main/R/Session_1
 [s1-vid1]:   #
 [s1-vid2]:   #
 
 [s2-slides]: #
-[s2-code]:   #
+[s2-code]:   https://github.com/joshcullen/advanced_animal_movement_workshop/tree/main/R/Session_2
 [s2-vid1]:   #
 [s2-vid2]:   #
 
 [s3-slides]: #
-[s3-code]:   #
+[s3-code]:   https://github.com/joshcullen/advanced_animal_movement_workshop/tree/main/R/Session_3
 [s3-vid1]:   #
 [s3-vid2]:   #
 
 [s4-slides]: #
-[s4-code]:   #
+[s4-code]:   https://github.com/joshcullen/advanced_animal_movement_workshop/tree/main/R/Session_4
 [s4-vid1]:   #
 [s4-vid2]:   #
 
 [s5-slides]: #
-[s5-code]:   #
+[s5-code]:   https://github.com/joshcullen/advanced_animal_movement_workshop/tree/main/R/Session_5
 [s5-vid1]:   #
 [s5-vid2]:   #
 
 [s6-slides]: #
-[s6-code]:   #
+[s6-code]:   https://github.com/joshcullen/advanced_animal_movement_workshop/tree/main/R/Session_6
 [s6-vid1]:   #
 [s6-vid2]:   #
 
 [s7-slides]: #
-[s7-code]:   #
 [s7-vid1]:   #

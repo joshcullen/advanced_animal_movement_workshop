@@ -46,7 +46,7 @@ cran_pkgs <- c(
   "glmmTMB",
   
   # Session 4: Remote Sensing & Earth Observation
-  "rsi", "rstac", "osmdata", "elevatr", "ndcf4",
+  "rsi", "rstac", "osmdata", "elevatr", "ncdf4",
   
   # Session 5: Species-Habitat Associations & SSFs
   "lwgeom", "mgcv", "gratia",
@@ -73,23 +73,26 @@ if (!requireNamespace("rnaturalearthhires", quietly = TRUE)) {
 
 # aniMotum (Ian Jonsen R-Universe)
 message("Installing latest aniMotum from R-Universe...")
-install.packages(
-  "aniMotum", 
-  repos = c("[https://ianjonsen.r-universe.dev](https://ianjonsen.r-universe.dev)", "[https://cloud.r-project.org](https://cloud.r-project.org)"),
-  dependencies = TRUE
-)
+install.packages("aniMotum", 
+                 repos = c("https://cloud.r-project.org",
+                           "https://ianjonsen.r-universe.dev"),
+                 dependencies = TRUE)
 
 # momentuHMM v2.0.0 (GitHub)
 message("Installing momentuHMM (v2.0.0) from GitHub...")
-remotes::install_github("bmcclintock/momentuHMM", dependencies = TRUE)
+remotes::install_github("bmcclintock/momentuHMM@develop", dependencies = TRUE)
 
 # INLA (special repo)
 message("Installing latest stable version of INLA...")
+if (!requireNamespace("BiocManager", quietly = TRUE)) {  #deps 'graph' and 'Rgraphviz' no longer on CRAN
+  install.packages("BiocManager")
+  BiocManager::install(c("graph", "Rgraphviz"), dep=TRUE)
+}
 install.packages("INLA", repos=c(getOption("repos"), INLA="https://inla.r-inla-download.org/R/stable"), dep=TRUE)
 
 # 4. Verification Check
 message("\n--- Installation Verification ---")
-all_pkgs <- c(cran_pkgs, "rnaturalearthhires", "aniMotum", "momentuHMM", "INLA)
+all_pkgs <- c(cran_pkgs, "rnaturalearthhires", "aniMotum", "momentuHMM", "INLA")
 installed <- all_pkgs %in% installed.packages()[, "Package"]
 
 if (all(installed)) {

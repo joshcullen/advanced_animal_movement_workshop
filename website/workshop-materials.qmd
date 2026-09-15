@@ -48,7 +48,7 @@ This page contains links to all lecture slides, R coding scripts, and video reco
 | • Bayesian workflows, `brms`, Stan, and INLA/inlabru | [{{< fa file-pdf >}} Slides][s6-slides] | — | {{< fa video >}} Watch |
 | • Hands-on: Hierarchical & spatial RSFs using `inlabru` | — | [{{< fa code >}} Script][s6-code] | {{< fa video >}} Watch |
 | **Session 7: Machine Learning & Emerging Directions** | | | |
-| • ML state classification, Random Forests & deep learning | {{< fa file-pdf >}} Slides | — | {{< fa video >}} Watch |
+| • ML state classification, Random Forests & deep learning | [{{< fa file-pdf >}} Slides][s7-slides] | — | {{< fa video >}} Watch |
 
 :::
 
@@ -87,5 +87,5 @@ This page contains links to all lecture slides, R coding scripts, and video reco
 [s6-vid1]:   #
 [s6-vid2]:   #
 
-[s7-slides]: #
+[s7-slides]: https://github.com/joshcullen/advanced_animal_movement_workshop/blob/main/slides/07_Machine%20learning%20and%20emerging%20directions.pdf
 [s7-vid1]:   #

@@ -5,7 +5,7 @@ title: "Modelling for movement and spatial ecology with animal telemetry data"
 
 # From telemetry data to ecological inference and conservation action
 
-A workshop developed by [Josh Cullen](https://joshcullen.github.io) in collaboration with Stellenbosch University, Wildlife Free to Roam, and NiTHeCS (National Institute for Theoretical and Computational Sciences).
+A workshop developed by [Josh Cullen](https://joshcullen.github.io) in collaboration with Stellenbosch University, Wildlife Free to Roam, and NiTHeCS (National Institute for Theoretical and Computational Sciences). Elephant telemetry data provided through a collaboration with Peace Parks Foundation.
 
 ------------------------------------------------------------------------
 

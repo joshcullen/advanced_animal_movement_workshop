@@ -174,13 +174,19 @@ This page provides links to official package documentation and software reposito
 * Gelman et al. (2026). [Statistical workflow](https://dx.doi.org/10.1098/rsta.2025.0293)
 
 ### Machine Learning in Movement Ecology
-* Valetta et al. (2019) [Applications of machine learning in animal behaviour studies](https://sciencedirect.com/science/article/pii/S0003347219300350)
-* Ladds et al. (2017) [Supervised machine learning algorithms to classify behavioural states from accelerometer data](https://www.sciencedirect.com/science/article/pii/S030438001730032X)
+* Browninig et al. (2018) [Predicting animal behaviour using deep learning: GPS data alone accurately predict diving in seabirds](https://doi.org/10.1111/2041-210X.12926)
 * Hirakawa et al. (2018) [Can AI predict animal movements? Filling gaps in animal trajectories using inverse reinforcement learning](https://doi.org/10.1002/ecs2.2447)
-* Maekawa et al. (2020) [Deep learning-assisted comparative analysis of animal trajectories with DeepHL](https://doi.org/10.1038/s41467-020-19105-0)
-* Tuia et al. (2022) [Perspectives in machine learning for wildlife conservation](https://www.nature.com/articles/s41467-022-29808-x)
+* Carlson (2020) [embarcadero: Species distribution modelling with Bayesian additive regression trees in r](https://doi.org/10.1111/2041-210X.13389)
+* Wijeyakulasuriya et al. (2020) [Machine learning for modeling animal movement](https://doi.org/10.1371/journal.pone.0235750)
+* Tuia et al. (2022) [Perspectives in machine learning for wildlife conservation](https://doi.org/10.1038/s41467-022-27980-y)
+* Bergen et al. (2023) [A review of supervised learning methods for classifying animal behavioural states from environmental features](https://doi.org/10.1111/2041-210X.14019)
+* Pichler & Hartig (2023) [Machine learning and deep learning—A review for ecologists
+](https://doi.org/10.1111/2041-210X.14061)
+* Dunford et al. (2024) [Identifying animal behaviours from accelerometers: Improving predictive accuracy of machine learning by refining the variables selected, data frequency, and sample duration](https://doi.org/10.1002/ece3.11380)
+* Hoffman et al. (2024) [A benchmark for computational analysis of animal behavior, using animal-borne tags](https://doi.org/10.1186/s40462-024-00511-8)
 * Fronville et al. (2026) [Analyzing animal movement using deep learning](https://arxiv.org/abs/2603.24009)
 * Forrest et al. (2026) [Predicting animal movement with deepSSF: A deep learning step selection framework](https://doi.org/10.1111/2041-210x.70136)
 * Agarwal et al. (2026) [Leveraging machine learning and accelerometry to classify animal behaviours with uncertainty](https://doi.org/10.1111/2041-210x.70206)
+* Methods in Ecology & Evolution (2026) [Special Feature: Conservation, Ecology and Artificial Intelligence — Advances and Symbiotic Solutions](https://besjournals.onlinelibrary.wiley.com/toc/2041210x/2026/17/2)
 
 :::

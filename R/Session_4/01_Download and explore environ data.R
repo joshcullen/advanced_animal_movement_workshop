@@ -348,7 +348,7 @@ ggplot() +
 ###############################################
 
 # Define study area as an sf object (EPSG:4326)
-aoi <- st_as_sf(st_as_sfc(st_bbox(gl_bbox)), crs = 4326)
+aoi <- st_as_sf(st_as_sfc(st_bbox(gl_bbox - 0.5)), crs = 4326)
 
 # Stream in ESA WorldCover with STAC parameters
 tic()
@@ -480,7 +480,7 @@ ndvi_vrt <- map(urls_by_date, ~{
   
   # Stitch the streaming URLs into a spatial mosaic
   vrt(vsi_urls)
-  })
+  }, .progress = TRUE)
 toc()  #took 1.5 min
 
 ndvi_vrt$`2022-03-06`

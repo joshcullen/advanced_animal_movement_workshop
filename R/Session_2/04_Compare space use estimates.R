@@ -67,7 +67,7 @@ ud.all <- rbind(kde_href, kde_hpi, dbbmm, akde_sf[,-2])
 # Show all IDs, methods, and levels
 ggplot() +
   geom_sf(data = africa) +
-  geom_path(data = dat, aes(x, y, group = id), size = 0.5, alpha = 0.5) +
+  geom_path(data = dat, aes(x, y, group = id), linewidth = 0.5, alpha = 0.5) +
   geom_sf(data = ud.all, aes(color = method), fill = "transparent", size = 0.5) +
   scale_color_met_d('Egypt') +
   theme_bw() +

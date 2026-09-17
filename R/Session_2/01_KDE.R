@@ -115,6 +115,7 @@ h_pi <- hr_kde_pi(dat_track2, rescale = "xvar")
 dat_kde_hpi <- hr_kde(dat_track2, trast = trast, h = h_pi, levels = c(0.5, 0.95))
 dat_kde_hpi
 plot(dat_kde_hpi, col = c("red", "blue"))
+# plot(dat_kde_hpi, col = c("red", "blue"), add.relocations = FALSE)
 
 # Extract contours and raster for estimated UD
 kde_hpi_contours <- hr_isopleths(dat_kde_hpi)  #pulls the levels supplied to `hr_kde`

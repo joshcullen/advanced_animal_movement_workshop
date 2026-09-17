@@ -270,7 +270,7 @@ dat_sf2$lulc <- extract(lulc, dat_sf2, ID = FALSE) |>
 
 ### Dynamic layer ###
 
-#While more common in marine studies, dynamic variables (e.g., vegetation indices, water extent, burned area, duman development, etc) play major roles on when and where animals move. While some regions that are relatively unchanging and stable over years and seasons may be well-suited to use of a static LULC layer, there are often times that dynamic layers are necessary for ecological analyses
+#While more common in marine studies, dynamic variables (e.g., vegetation indices, water extent, burned area, human development, etc) play major roles on when and where animals move. While some regions that are relatively unchanging and stable over years and seasons may be well-suited to use of a static LULC layer, there are often times that dynamic layers are necessary for ecological analyses
 
 #Since the layers we want to extract vary over space for a specific time (or time window), we need to extract time-matched values in space
 

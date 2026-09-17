@@ -287,7 +287,7 @@ dat4 |>
   
   ggplot() +
   geom_density(aes(value, color = presabs)) +
-  geom_rug(aes(value, color = presabs)) +
+  # geom_rug(aes(value, color = presabs)) +
   scale_color_brewer("", palette = "Set1") +
   labs(x = "Value", y = "Density") +
   theme_bw() +

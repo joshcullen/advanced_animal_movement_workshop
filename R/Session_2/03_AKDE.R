@@ -413,6 +413,7 @@ akde <- akde(data = dat.telem2[idx], CTMM = ctmm_fit_best, weights = TRUE, dt = 
              grid = list(dr = 1000, align.to.origin = TRUE, dr.fn = max)
              )
 toc()  #took 18 min
+# load("processed_data/Session_2/AKDE_fits.RData")
 
 map(akde, summary)
 plot(dat.telem2[idx], UD = akde, col = rainbow(length(dat.telem2[idx])))
@@ -558,6 +559,7 @@ tic()
 pkde <- pkde(data = dat.telem2[idx], UD = akde, kernel = "individual", ref = "Gaussian", weights = TRUE,
              dt = dt1, population = 3)
 toc()  #took 10 min
+# load("processed_data/Session_2/PKDE_fits.RData")
 
 summary(pkde)
 plot(dat.telem2[idx], UD = pkde, col = rainbow(length(dat.telem2[idx])))
